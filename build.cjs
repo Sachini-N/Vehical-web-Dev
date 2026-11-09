@@ -27,3 +27,4 @@ if (inRoot && fs.existsSync(srcDist)) {
 }
 
 console.log('[Build] Frontend build completed successfully!');
+
