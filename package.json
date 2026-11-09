@@ -4,7 +4,7 @@
   "description": "Real-Time Vehicle Fault Detection and Recommendation System",
   "main": "api/index.js",
   "scripts": {
-    "build": "cd frontend && npm install && npx vite build",
+    "build": "node build.cjs",
     "start": "node backend/server.js",
     "server": "node server-phone.js",
     "seed": "cd backend && npm run seed"
