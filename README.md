@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Real-Time Engine Fault Detection & Recommendation System
 ### React Native + MongoDB + ELM327 Bluetooth OBD-II
 
@@ -73,3 +74,7 @@ Simply open `web/index.html` in Google Chrome or Microsoft Edge to test:
 - Real-time sensor gauge streaming (RPM, ECT, MAF, MAP, TPS, O2)
 - Fault code simulation and instant matching with possible causes & recommended actions!
 
+=======
+# Vehical-web-Dev
+Vehicle Web Development Project
+>>>>>>> 89920fddb96f62bb61f59988ab1062bdffbe40c4
