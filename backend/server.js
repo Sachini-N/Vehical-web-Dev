@@ -23,12 +23,27 @@ app.get(['/health', '/api/health'], (req, res) => {
   });
 });
 
-// Mount Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/vehicles', require('./routes/vehicleRoutes'));
-app.use('/api/faults', require('./routes/faultRoutes'));
-app.use('/api/scans', require('./routes/scanRoutes'));
-app.use('/api/ai', require('./routes/aiRoutes'));
+// Mount Routes (support both /api/* and direct path if rewritten by serverless gateway)
+const authRoutes = require('./routes/authRoutes');
+const vehicleRoutes = require('./routes/vehicleRoutes');
+const faultRoutes = require('./routes/faultRoutes');
+const scanRoutes = require('./routes/scanRoutes');
+const aiRoutes = require('./routes/aiRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
+app.use('/api/vehicles', vehicleRoutes);
+app.use('/vehicles', vehicleRoutes);
+
+app.use('/api/faults', faultRoutes);
+app.use('/faults', faultRoutes);
+
+app.use('/api/scans', scanRoutes);
+app.use('/scans', scanRoutes);
+
+app.use('/api/ai', aiRoutes);
+app.use('/ai', aiRoutes);
 
 const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5001;
 
