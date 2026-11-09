@@ -10,7 +10,7 @@ export default function BluetoothScanner({
   const [isScanning, setIsScanning] = useState(false);
   const [connectingAddress, setConnectingAddress] = useState(null);
   const [logs, setLogs] = useState([
-    'System ready. Bluetooth SPP Profile enabled.',
+    'Bluetooth SPP initialized.',
     'Listening on RFCOMM UUID 00001101-0000-1000-8000-00805F9B34FB',
   ]);
 
@@ -49,207 +49,146 @@ export default function BluetoothScanner({
     setIsScanning(true);
     setLogs((prev) => [
       ...prev,
-      '🔍 Starting Bluetooth inquiry (Discovery mode)...',
-      'Scanning 2.4 GHz frequency for OBD-II compatible adapters...',
+      '🔍 Scanning 2.4 GHz spectrum for ELM327 adapters...',
     ]);
 
     setTimeout(() => {
       setIsScanning(false);
       setLogs((prev) => [
         ...prev,
-        `✓ Discovery complete. Found ${discoveredDevices.length} adapters nearby.`,
+        `✓ Discovery complete. Found ${discoveredDevices.length} ELM327 adapters nearby.`,
       ]);
-    }, 1600);
+    }, 1800);
   };
 
-  const handleDeviceClick = (dev) => {
+  const handleDeviceConnect = (dev) => {
     setConnectingAddress(dev.address);
-    setLogs([
-      `Pairing with ${dev.name} (${dev.address})...`,
-      'Opening RFCOMM socket...',
+    setLogs((prev) => [
+      ...prev,
+      `Connecting to ${dev.name} [${dev.address}]...`,
+      'Sending ATZ (Reset OBD-II)...',
+      'Sending ATE0 (Echo Off)...',
+      'Sending ATSP0 (Automatic Protocol Detect: ISO 15765-4 CAN)...',
+      '✓ Connected to ECU! Mode 01 & Mode 03 ready.',
     ]);
 
     setTimeout(() => {
-      setLogs((prev) => [...prev, '> AT Z (Resetting ELM327)']);
-      setTimeout(() => {
-        setLogs((prev) => [...prev, '< ELM327 v1.5 OK']);
-        setLogs((prev) => [...prev, '> AT E0 (Echo off)']);
-        setTimeout(() => {
-          setLogs((prev) => [...prev, '< OK']);
-          setLogs((prev) => [
-            ...prev,
-            '> AT SP 0 (Auto Protocol Select: ISO 15765-4 CAN 11/500)',
-          ]);
-          setTimeout(() => {
-            setLogs((prev) => [...prev, '< OK (ECU Responding on 500kbps)']);
-            setLogs((prev) => [...prev, '> 0100 (Querying Supported PIDs)']);
-            setTimeout(() => {
-              setLogs((prev) => [...prev, '< 41 00 BE 3F B8 11']);
-              setLogs((prev) => [
-                ...prev,
-                '✓ Vehicle ECU Communication Established!',
-              ]);
-              onConnect(dev);
-              setConnectingAddress(null);
-            }, 300);
-          }, 300);
-        }, 300);
-      }, 300);
-    }, 400);
+      setConnectingAddress(null);
+      onConnect(dev);
+    }, 1200);
   };
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onBack}
-            className="p-1 hover:bg-slate-800 rounded-lg text-lg text-slate-300 transition-colors"
-          >
-            ←
-          </button>
-          <h2 className="text-lg font-bold">Bluetooth OBD-II Scanner</h2>
-        </div>
+      {/* Top Bar */}
+      <div className="flex items-center space-x-3 pb-2 border-b border-slate-200">
         <button
-          onClick={runDiscovery}
-          disabled={isScanning}
-          className="px-3 py-1 bg-sky-600 hover:bg-sky-500 font-bold text-xs text-white rounded-lg shadow disabled:opacity-50 transition-all"
+          onClick={onBack}
+          className="p-1 hover:bg-slate-200 rounded-lg text-lg text-slate-700 transition-colors"
         >
-          {isScanning ? 'Scanning...' : 'Scan Devices'}
+          ←
         </button>
+        <h2 className="text-lg font-extrabold text-slate-900">Bluetooth Adapters</h2>
       </div>
 
-      {/* Radar Animation Area */}
-      <div className="relative h-44 bg-[#071120] border border-slate-800/80 rounded-2xl flex flex-col items-center justify-center overflow-hidden shadow-inner">
-        <div className="absolute w-36 h-36 border border-sky-500/20 rounded-full"></div>
-        <div className="absolute w-24 h-24 border border-sky-500/30 rounded-full"></div>
-        <div className="absolute w-12 h-12 border border-sky-500/40 rounded-full"></div>
-
-        {isScanning && (
-          <div
-            className="absolute w-36 h-36 rounded-full radar-sweep"
-            style={{
-              background:
-                'conic-gradient(from 0deg, rgba(56, 189, 248, 0.4) 0deg, transparent 60deg)',
-            }}
-          ></div>
-        )}
-
-        {isScanning && (
-          <div className="absolute w-28 h-28 border-2 border-sky-400 rounded-full sonar-ring"></div>
-        )}
-
-        <div className="z-10 w-12 h-12 rounded-full bg-slate-900 border-2 border-sky-400 flex items-center justify-center text-xl shadow-lg shadow-sky-500/20">
-          📡
+      {/* Connection State Card */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-2xl">
+            📡
+          </div>
+          <div>
+            <h3 className="font-extrabold text-sm text-slate-900">
+              {isConnected ? connectedDevice?.name || 'ELM327 Bluetooth' : 'Not Connected'}
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              {isConnected ? `Address: ${connectedDevice?.address}` : 'Pair with OBD-II adapter'}
+            </p>
+          </div>
         </div>
 
-        <p className="z-10 text-xs font-semibold text-sky-300 mt-3">
-          {isScanning
-            ? 'Inquiring nearby ELM327 Bluetooth adapters...'
-            : 'Bluetooth Radio Active • Ready to Pair'}
-        </p>
+        {isConnected ? (
+          <button
+            onClick={onDisconnect}
+            className="px-3 py-1.5 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl"
+          >
+            Disconnect
+          </button>
+        ) : (
+          <button
+            onClick={runDiscovery}
+            disabled={isScanning}
+            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs"
+          >
+            {isScanning ? 'Scanning...' : 'Scan Now'}
+          </button>
+        )}
       </div>
 
-      {/* Devices List */}
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider">
-            Nearby OBD-II Adapters
-          </h3>
-          <span className="text-[11px] text-slate-500 font-mono">SPP UUID 00001101</span>
-        </div>
+      {/* Discovered Devices */}
+      <div className="space-y-2.5">
+        <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider">
+          Nearby OBD-II Devices
+        </h4>
 
-        <div className="space-y-2">
-          {discoveredDevices.map((dev) => {
-            const isThisConnected =
-              isConnected && connectedDevice?.address === dev.address;
-            const isThisConnecting = connectingAddress === dev.address;
+        {discoveredDevices.map((dev) => {
+          const isCurrent = isConnected && connectedDevice?.address === dev.address;
+          const isConnecting = connectingAddress === dev.address;
 
-            return (
-              <div
-                key={dev.address}
-                className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                  isThisConnected
-                    ? 'bg-emerald-950/40 border-emerald-500/70 shadow-lg shadow-emerald-950/50'
-                    : 'bg-[#101b2d] border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-xl">
-                    🔌
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-bold text-sm text-white">{dev.name}</h4>
-                      {dev.paired && (
-                        <span className="text-[10px] bg-sky-950 text-sky-400 px-1.5 py-0.2 rounded border border-sky-800">
-                          Paired
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-                      {dev.address}
-                    </p>
-                    <p className="text-[10px] text-emerald-400 mt-0.5">
-                      Signal: {dev.rssi} dBm • {dev.type}
-                    </p>
-                  </div>
-                </div>
-
+          return (
+            <div
+              key={dev.address}
+              className={`bg-white border rounded-2xl p-3.5 flex items-center justify-between shadow-xs transition-all ${
+                isCurrent
+                  ? 'border-emerald-400 bg-emerald-50/30'
+                  : 'border-slate-200 hover:border-blue-300'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <span className="text-xl">🔌</span>
                 <div>
-                  {isThisConnected ? (
-                    <button
-                      onClick={onDisconnect}
-                      className="px-3 py-1.5 bg-rose-900/60 hover:bg-rose-800 border border-rose-600 text-rose-200 text-xs font-bold rounded-lg shadow transition-colors"
-                    >
-                      Disconnect
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleDeviceClick(dev)}
-                      disabled={Boolean(connectingAddress)}
-                      className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg shadow disabled:opacity-50 transition-colors"
-                    >
-                      {isThisConnecting ? 'Pairing...' : 'Connect'}
-                    </button>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    <span className="font-bold text-sm text-slate-900">{dev.name}</span>
+                    {dev.paired && (
+                      <span className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 px-1.5 py-0.2 rounded font-bold">
+                        Paired
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] font-mono text-slate-500">
+                    {dev.address} • {dev.rssi} dBm
+                  </p>
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              {isCurrent ? (
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                  ✓ Connected
+                </span>
+              ) : (
+                <button
+                  onClick={() => handleDeviceConnect(dev)}
+                  disabled={isConnecting}
+                  className="px-3 py-1 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white text-blue-700 font-bold text-xs rounded-xl transition-colors"
+                >
+                  {isConnecting ? 'Pairing...' : 'Connect'}
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Terminal Communication Log */}
-      <div className="bg-[#030712] border border-slate-800 rounded-xl p-3 text-xs font-mono">
-        <div className="flex justify-between items-center pb-2 border-b border-slate-800 mb-2">
-          <span className="text-slate-400 font-bold text-[11px] flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>ELM327 Handshake Console</span>
-          </span>
-          <button
-            onClick={() => setLogs(['Console cleared.'])}
-            className="text-[10px] text-slate-500 hover:text-slate-300"
-          >
-            Clear
-          </button>
+      {/* Terminal Command Output */}
+      <div className="bg-slate-900 text-slate-200 rounded-2xl p-3.5 font-mono text-[11px] space-y-1 shadow-sm">
+        <div className="flex justify-between items-center text-slate-400 pb-1 border-b border-slate-800 text-[10px] font-bold">
+          <span>AT COMMAND BUS CONSOLE</span>
+          <span>SPP RFCOMM</span>
         </div>
-        <div className="max-h-28 overflow-y-auto custom-scroll space-y-1 text-slate-300 text-[11px]">
+        <div className="max-h-28 overflow-y-auto custom-scroll space-y-1 pt-1">
           {logs.map((log, i) => (
-            <div
-              key={i}
-              className={
-                log.startsWith('>')
-                  ? 'text-amber-400'
-                  : log.startsWith('<')
-                  ? 'text-sky-400'
-                  : log.startsWith('✓')
-                  ? 'text-emerald-400 font-bold'
-                  : 'text-slate-400'
-              }
-            >
-              {log}
+            <div key={i} className="text-emerald-400 leading-tight">
+              &gt; {log}
             </div>
           ))}
         </div>
@@ -257,4 +196,3 @@ export default function BluetoothScanner({
     </div>
   );
 }
-

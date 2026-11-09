@@ -24,16 +24,16 @@ export default function VehicleSelector({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3.5">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
         <div>
-          <h2 className="text-lg font-bold">Select Vehicle Model</h2>
-          <p className="text-xs text-slate-400">28 Supported Vehicles (Excel Database)</p>
+          <h2 className="text-lg font-extrabold text-slate-900">Select Vehicle Model</h2>
+          <p className="text-xs text-slate-500 font-medium">All 28 Supported Vehicles (Excel Database)</p>
         </div>
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-white font-bold p-1 text-lg"
+          className="text-slate-400 hover:text-slate-700 font-bold p-1 text-xl"
         >
           ✕
         </button>
@@ -46,7 +46,7 @@ export default function VehicleSelector({
           placeholder="Search brand or model (e.g. Wagon R, Prius...)"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-[#101b2d] border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-sky-500"
+          className="w-full bg-white border border-slate-200 focus:border-blue-500 text-slate-900 rounded-xl px-3.5 py-2.5 text-xs font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
 
@@ -56,10 +56,10 @@ export default function VehicleSelector({
           <button
             key={b}
             onClick={() => setSelectedBrand(b)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
               selectedBrand === b
-                ? 'bg-sky-600 text-white shadow'
-                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
             }`}
           >
             {b}
@@ -67,33 +67,43 @@ export default function VehicleSelector({
         ))}
       </div>
 
-      {/* Vehicle Models List */}
-      <div className="space-y-2 max-h-[620px] overflow-y-auto custom-scroll pr-1">
+      {/* Vehicles List */}
+      <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scroll pr-1">
         {filtered.map((v, i) => {
-          const isCurrent =
-            selectedVehicle.brand === v.brand &&
-            selectedVehicle.model === v.model;
+          const isSelected =
+            selectedVehicle.brand === v.brand && selectedVehicle.model === v.model;
 
           return (
             <div
               key={i}
               onClick={() => {
-                onSelectVehicle(v);
+                onSelectVehicle({
+                  brand: v.brand,
+                  model: v.model,
+                  licensePlate: selectedVehicle.licensePlate || 'WP CAC-4589',
+                  year: selectedVehicle.year || 2018,
+                });
                 onClose();
               }}
-              className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${
-                isCurrent
-                  ? 'bg-sky-950/60 border-sky-500 text-sky-200'
-                  : 'bg-[#101b2d] border-slate-800 hover:border-slate-700 text-slate-200'
+              className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between transition-all ${
+                isSelected
+                  ? 'bg-blue-50/80 border-blue-400 text-blue-950 font-bold'
+                  : 'bg-white border-slate-200 hover:border-blue-300 text-slate-800'
               }`}
             >
               <div>
-                <span className="text-[10px] font-bold uppercase text-sky-400 tracking-wider">
-                  {v.brand}
-                </span>
-                <div className="font-semibold text-sm">{v.model}</div>
+                <div className="text-sm font-extrabold">
+                  {v.brand} {v.model}
+                </div>
+                <div className="text-[11px] text-slate-500 font-medium">
+                  {v.fuelType} • Sensors: {v.supportedSensors.join(', ')}
+                </div>
               </div>
-              <span className="text-slate-400 text-base">›</span>
+              {isSelected ? (
+                <span className="text-blue-600 font-extrabold text-xs">✓ Active</span>
+              ) : (
+                <span className="text-slate-300 text-lg">›</span>
+              )}
             </div>
           );
         })}
@@ -101,4 +111,3 @@ export default function VehicleSelector({
     </div>
   );
 }
-

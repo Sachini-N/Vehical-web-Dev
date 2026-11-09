@@ -15,15 +15,15 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     body {
-      background-color: #030712;
-      color: #f1f5f9;
+      background-color: #f8fafc;
+      color: #0f172a;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     .custom-scroll::-webkit-scrollbar {
       width: 5px;
     }
     .custom-scroll::-webkit-scrollbar-thumb {
-      background: #1e293b;
+      background: #cbd5e1;
       border-radius: 4px;
     }
     @keyframes radarSweep {
@@ -46,9 +46,9 @@
     }
   </style>
 </head>
-<body class="flex justify-center items-center min-h-screen p-0 sm:p-6 bg-slate-950 overflow-x-hidden">
+<body class="flex justify-center items-center min-h-screen p-0 sm:p-6 bg-gradient-to-br from-slate-100 via-sky-50 to-indigo-100 overflow-x-hidden text-slate-800">
 
-  <div id="root" class="w-full max-w-md bg-[#0a1220] border-0 sm:border sm:border-slate-800 sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[100dvh] sm:h-[860px] relative"></div>
+  <div id="root" class="w-full max-w-md bg-white border-0 sm:border sm:border-slate-200/90 sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[100dvh] sm:h-[860px] relative"></div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
@@ -610,19 +610,35 @@
 ;
 
     function App() {
-      // Navigation states: 'auth', 'home', 'garage', 'bluetooth', 'live', 'faults', 'details', 'history', 'vehicleSelect'
-      // FIRST SCREEN DISPLAYED IS 'auth' (Registration / Login)
-      const [currentScreen, setCurrentScreen] = useState("auth");
+      // Default to Home Screen for instant diagnostic view
+      const [currentScreen, setCurrentScreen] = useState("home");
       const [liveViewMode, setLiveViewMode] = useState("cluster"); // 'cluster' or 'grid'
 
-      // Logged in User & Garage State (Starts as null so user must register/login first)
-      const [currentUser, setCurrentUser] = useState(null);
+      // Default active driver profile
+      const [currentUser, setCurrentUser] = useState({
+        _id: "user_default_1",
+        fullName: "Kasun Perera",
+        email: "kasun@example.com",
+        phone: "077 123 4567",
+        vehicles: [
+          {
+            _id: "veh_1",
+            brand: "SUZUKI",
+            model: "Wagon R",
+            licensePlate: "WP CAC-4589",
+            year: 2018,
+            fuelType: "Petrol / Hybrid",
+            mileage: 68500,
+            isPrimary: true
+          }
+        ]
+      });
 
-      // Active vehicle for OBD-II scan (Set dynamically upon registration)
+      // Active vehicle for OBD-II scan
       const [selectedVehicle, setSelectedVehicle] = useState({
         brand: "SUZUKI",
         model: "Wagon R",
-        licensePlate: "WP-NEW-0001",
+        licensePlate: "WP CAC-4589",
         year: 2018
       });
 
@@ -877,17 +893,17 @@
       const availableModels = VEHICLES.filter(v => v.brand === regBrand);
 
       return (
-        <div className="flex flex-col h-full select-none text-slate-100">
+        <div className="flex flex-col h-full select-none text-slate-800 bg-slate-50">
           
           {/* Top Status Header */}
-          <div className="flex justify-between items-center px-5 pt-3 pb-2 text-xs text-slate-400 border-b border-slate-800/80 bg-[#070e1a]">
-            <span className="font-mono text-slate-300">10:24 PM</span>
-            <div className="flex items-center space-x-2">
-              <span className={`flex items-center text-[11px] font-semibold ${isConnected ? "text-emerald-400" : "text-rose-400"}`}>
-                <span className={`w-2 h-2 rounded-full mr-1.5 ${isConnected ? "bg-emerald-400 animate-pulse" : "bg-rose-400"}`}></span>
+          <div className="flex justify-between items-center px-5 pt-3 pb-2 text-xs font-medium text-slate-600 border-b border-slate-200 bg-white/95">
+            <span className="font-mono text-slate-700 font-semibold">10:24 AM</span>
+            <div className="flex items-center space-x-2.5">
+              <span className={`flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full ${isConnected ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"}`}>
+                <span className={`w-2 h-2 rounded-full mr-1.5 ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`}></span>
                 {isConnected ? "ELM327 Bluetooth" : "Disconnected"}
               </span>
-              <span>🔋 78%</span>
+              <span className="text-slate-600 font-semibold">🔋 78%</span>
             </div>
           </div>
 
@@ -902,10 +918,12 @@
                 {/* Header */}
                 <div className="flex justify-between items-center pb-1">
                   <div className="flex items-center space-x-3">
-                    <span className="text-3xl">🚗</span>
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-2xl text-white shadow-md shadow-blue-500/25">
+                      🚗
+                    </div>
                     <div>
-                      <h1 className="text-xl font-bold tracking-tight">OBD II</h1>
-                      <p className="text-xs text-slate-400">Vehicle Health Monitor</p>
+                      <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">OBD-II Diagnostic</h1>
+                      <p className="text-xs text-slate-500 font-medium">Vehicle Health & Fault Detection</p>
                     </div>
                   </div>
 
@@ -913,23 +931,23 @@
                     {/* Bluetooth Button */}
                     <button 
                       onClick={() => setCurrentScreen("bluetooth")}
-                      className="p-2 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 text-sky-400 flex items-center space-x-1"
+                      className="p-2 bg-white border border-slate-200 hover:border-blue-300 rounded-xl hover:bg-blue-50 text-blue-600 flex items-center space-x-1 font-bold text-xs shadow-xs"
                       title="Bluetooth Scanner"
                     >
                       <span>📡</span>
-                      <span className="text-xs font-bold">BT</span>
+                      <span>BT</span>
                     </button>
 
                     {/* Driver Garage / Registration Avatar */}
                     <button 
                       onClick={() => setCurrentScreen(currentUser ? "garage" : "auth")}
-                      className="p-1.5 bg-gradient-to-r from-sky-600 to-indigo-600 rounded-xl text-white flex items-center space-x-1.5 shadow"
+                      className="px-2.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white flex items-center space-x-1.5 shadow-sm text-xs font-bold"
                       title="My Garage & Profile"
                     >
-                      <span className="text-xs font-bold px-1">
+                      <span>🚘</span>
+                      <span>
                         {currentUser?.fullName ? currentUser.fullName.split(' ')[0] : 'Sign In'}
                       </span>
-                      <span className="text-sm">🚘</span>
                     </button>
                   </div>
                 </div>
@@ -937,58 +955,58 @@
                 {/* Connection Status Card */}
                 <div 
                   onClick={() => setCurrentScreen("bluetooth")}
-                  className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer border transition-all ${
+                  className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer border shadow-xs transition-all ${
                     isConnected 
-                      ? "bg-emerald-950/40 border-emerald-500/50 hover:bg-emerald-950/60" 
-                      : "bg-rose-950/40 border-rose-500/50 hover:bg-rose-950/60"
+                      ? "bg-emerald-50/90 border-emerald-300 hover:bg-emerald-100/90 text-emerald-950" 
+                      : "bg-rose-50/90 border-rose-300 hover:bg-rose-100/90 text-rose-950"
                   }`}
                 >
                   <div className="flex items-center space-x-3">
                     <div className={`w-3.5 h-3.5 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
                     <div>
-                      <h3 className="font-semibold text-sm">
-                        {isConnected ? "Connected" : "Disconnected"}
+                      <h3 className="font-bold text-sm">
+                        {isConnected ? "Adapter Connected" : "ELM327 Disconnected"}
                       </h3>
-                      <p className="text-xs text-slate-400">
-                        {isConnected ? `${connectedDevice?.name || "ELM327"} (Bluetooth SPP)` : "Tap to open Bluetooth Scanner"}
+                      <p className="text-xs text-slate-600">
+                        {isConnected ? `${connectedDevice?.name || "ELM327 OBD-II"} (Bluetooth SPP)` : "Tap here to scan and pair adapter"}
                       </p>
                     </div>
                   </div>
-                  <span className="text-slate-400 font-bold text-lg">›</span>
+                  <span className="text-slate-400 font-bold text-xl">›</span>
                 </div>
 
-                {/* Registered Vehicle Card (with License Plate and Specs) */}
-                <div className="bg-[#101b2d] border border-slate-800/80 rounded-2xl p-4 flex justify-between items-center shadow-lg relative overflow-hidden">
+                {/* Registered Vehicle Card (Light with High Contrast) */}
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-4 flex justify-between items-center shadow-sm relative overflow-hidden">
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-[10px] uppercase font-bold text-sky-400 tracking-wider">
-                        {currentUser ? "Registered Vehicle" : "Selected Vehicle"}
+                      <span className="text-[10px] uppercase font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 tracking-wider">
+                        {currentUser ? "Active Vehicle" : "Selected Vehicle"}
                       </span>
                       {selectedVehicle.licensePlate && (
-                        <span className="bg-slate-800 border border-slate-700 text-sky-300 font-mono text-[10px] font-bold px-1.5 py-0.5 rounded">
+                        <span className="bg-amber-50 border border-amber-300 text-amber-900 font-mono text-[11px] font-bold px-2 py-0.5 rounded shadow-2xs">
                           {selectedVehicle.licensePlate}
                         </span>
                       )}
                     </div>
-                    <h2 className="text-lg font-bold text-white mt-1">
+                    <h2 className="text-xl font-extrabold text-slate-900 mt-1.5">
                       {selectedVehicle.brand} {selectedVehicle.model}
                     </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Owner: {currentUser?.fullName || "Guest Driver"}
+                    <p className="text-xs text-slate-600 mt-0.5 font-medium">
+                      Driver: {currentUser?.fullName || "Guest Driver"} ({selectedVehicle.year})
                     </p>
-                    <p className="text-[11px] text-slate-500 mt-1">Sensors: TPS, ECT, MAF, MAP, O2</p>
+                    <p className="text-[11px] text-slate-500 mt-1 font-medium">Sensors: <span className="font-bold text-slate-700">TPS, ECT, MAF, MAP, O2</span></p>
                   </div>
                   
                   <div className="flex flex-col items-end space-y-1.5">
                     <button 
                       onClick={() => setCurrentScreen("garage")}
-                      className="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold shadow"
+                      className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-colors"
                     >
                       My Garage
                     </button>
                     <button 
                       onClick={() => setCurrentScreen("vehicleSelect")}
-                      className="text-[11px] text-slate-400 hover:text-slate-200"
+                      className="text-[11px] text-blue-600 hover:text-blue-800 font-bold underline"
                     >
                       Change Model
                     </button>
@@ -999,33 +1017,33 @@
                 <button
                   onClick={handleRunScan}
                   disabled={isScanningVehicle}
-                  className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-[0.99]"
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold rounded-2xl shadow-md shadow-blue-500/20 flex items-center justify-center space-x-2.5 transition-all active:scale-[0.99]"
                 >
                   {isScanningVehicle ? (
                     <>
-                      <span className="animate-spin text-lg">⏳</span>
-                      <span>SCANNING ECU SENSORS & DTCS...</span>
+                      <span className="animate-spin text-xl">⏳</span>
+                      <span className="tracking-wide">SCANNING SENSORS & DIAGNOSTIC DTCS...</span>
                     </>
                   ) : (
                     <>
-                      <span>🔍</span>
-                      <span>START VEHICLE SCAN</span>
+                      <span className="text-xl">🔍</span>
+                      <span className="tracking-wide">START FULL VEHICLE SCAN</span>
                     </>
                   )}
                 </button>
 
                 {/* Quick Simulation Injector */}
-                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3 text-xs">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-slate-300 font-semibold flex items-center space-x-1">
+                <div className="bg-white border border-slate-200 rounded-2xl p-3.5 text-xs shadow-sm">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-slate-900 font-bold flex items-center space-x-1.5">
                       <span>🧪</span>
-                      <span>Fault Simulator (26 DTC Codes from Excel):</span>
+                      <span>Fault Code Simulator (Excel 26 DTCs):</span>
                     </span>
-                    <span className="text-[10px] text-sky-400 font-mono">Mode 03</span>
+                    <span className="text-[10px] text-blue-700 bg-blue-50 font-mono font-bold px-1.5 py-0.5 rounded border border-blue-200">Mode 03</span>
                   </div>
                   
                   {/* Quick Sensor Buttons */}
-                  <div className="flex flex-wrap gap-1.5 mt-1">
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
                     {[
                       { code: "P0101", label: "MAF (P0101)" },
                       { code: "P0120", label: "TPS (P0120)" },
@@ -1036,10 +1054,10 @@
                       <button
                         key={item.code}
                         onClick={() => handleTriggerFault(item.code)}
-                        className={`px-2 py-1 rounded-lg border text-[10px] font-mono transition-all ${
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all ${
                           activeDTCs.includes(item.code)
-                            ? "bg-rose-600 text-white border-rose-500 font-bold shadow-md shadow-rose-900/50"
-                            : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
+                            ? "bg-rose-600 text-white border-rose-600 font-bold shadow-sm"
+                            : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 font-semibold"
                         }`}
                       >
                         {item.label} {activeDTCs.includes(item.code) ? "✓ Active" : "+"}
@@ -1048,14 +1066,14 @@
                   </div>
 
                   {/* All 26 DTC Dropdown */}
-                  <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center space-x-2">
-                    <span className="text-[10px] text-slate-400">All 26 Codes:</span>
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center space-x-2">
+                    <span className="text-[11px] text-slate-600 font-semibold whitespace-nowrap">Choose Code:</span>
                     <select
                       onChange={(e) => {
                         if (e.target.value) handleTriggerFault(e.target.value);
                       }}
                       value=""
-                      className="flex-1 bg-[#0b1424] border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-sky-300 focus:outline-none"
+                      className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:bg-white focus:outline-none"
                     >
                       <option value="">-- Choose DTC Code to Test --</option>
                       {Object.keys(DTC_DATABASE).sort().map(c => (
@@ -1067,31 +1085,80 @@
                   </div>
                 </div>
 
-                {/* 4 Main Action Cards (Matches Slide 8) */}
-                <div className="grid grid-cols-1 gap-2.5 pt-1">
+                {/* 4 Main Action Cards (Matches Slide 8 in High-Contrast Colors) */}
+                <div className="grid grid-cols-1 gap-3 pt-1">
                   {/* 1. Live Data (Blue) */}
                   <div 
                     onClick={() => setCurrentScreen("live")}
-                    className="bg-[#1d63d8] hover:bg-[#1853ba] p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md transition-transform active:scale-[0.98]"
+                    className="bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md shadow-blue-500/20 transition-all active:scale-[0.99] text-white"
                   >
                     <div className="flex items-center space-x-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                      <div className="w-11 h-11 rounded-xl bg-white/25 flex items-center justify-center text-2xl">
                         📊
                       </div>
                       <div>
-                        <h3 className="font-bold text-base text-white">Live Data</h3>
-                        <p className="text-xs text-blue-100">View sensor values & gauges</p>
+                        <h3 className="font-extrabold text-base">Live Data</h3>
+                        <p className="text-xs text-blue-100 font-medium">Real-time gauges & sensor dials</p>
                       </div>
                     </div>
-                    <span className="text-2xl text-white font-light">›</span>
+                    <span className="text-3xl font-light">›</span>
                   </div>
 
                   {/* 2. Faults (Red) */}
                   <div 
                     onClick={() => setCurrentScreen("faults")}
-                    className="bg-[#d92d20] hover:bg-[#b82418] p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md transition-transform active:scale-[0.98]"
+                    className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md shadow-rose-500/20 transition-all active:scale-[0.99] text-white"
                   >
                     <div className="flex items-center space-x-3.5">
+                      <div className="w-11 h-11 rounded-xl bg-white/25 flex items-center justify-center text-2xl">
+                        ⚠️
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-base">Faults</h3>
+                        <p className="text-xs text-rose-100 font-medium">
+                          {activeDTCs.length > 0
+                            ? `${activeDTCs.length} active DTC error code(s)`
+                            : "No errors (Vehicle Normal)"}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-3xl font-light">›</span>
+                  </div>
+
+                  {/* 3. History (Green) */}
+                  <div 
+                    onClick={() => setCurrentScreen("history")}
+                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md shadow-emerald-500/20 transition-all active:scale-[0.99] text-white"
+                  >
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-11 h-11 rounded-xl bg-white/25 flex items-center justify-center text-2xl">
+                        🕒
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-base">History</h3>
+                        <p className="text-xs text-emerald-100 font-medium">Past diagnostic logs in MongoDB</p>
+                      </div>
+                    </div>
+                    <span className="text-3xl font-light">›</span>
+                  </div>
+
+                  {/* 4. Garage / Register (Indigo) */}
+                  <div 
+                    onClick={() => setCurrentScreen(currentUser ? "garage" : "auth")}
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md shadow-indigo-500/20 transition-all active:scale-[0.99] text-white"
+                  >
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-11 h-11 rounded-xl bg-white/25 flex items-center justify-center text-2xl">
+                        🚘
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-base">My Garage</h3>
+                        <p className="text-xs text-indigo-100 font-medium">Manage registered vehicles & driver profile</p>
+                      </div>
+                    </div>
+                    <span className="text-3xl font-light">›</span>
+                  </div>
+                </div>
                       <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
                         ⚠️
                       </div>
@@ -1910,46 +1977,44 @@
             )}
           </div>
 
-          {/* Bottom App Navigation Bar (Only visible after user registers/logs in) */}
-          {currentScreen !== "auth" && currentUser && (
-            <div className="grid grid-cols-5 bg-[#070e1a] border-t border-slate-800/80 py-2.5 text-center text-[10px] text-slate-400">
-              <button 
-                onClick={() => setCurrentScreen("home")}
-                className={`flex flex-col items-center ${currentScreen === "home" ? "text-sky-400 font-bold" : "hover:text-slate-200"}`}
-              >
-                <span className="text-lg">🏠</span>
-                <span>Home</span>
-              </button>
-              <button 
-                onClick={() => setCurrentScreen("live")}
-                className={`flex flex-col items-center ${currentScreen === "live" ? "text-sky-400 font-bold" : "hover:text-slate-200"}`}
-              >
-                <span className="text-lg">📈</span>
-                <span>Live Data</span>
-              </button>
-              <button 
-                onClick={() => setCurrentScreen("faults")}
-                className={`flex flex-col items-center ${currentScreen === "faults" ? "text-sky-400 font-bold" : "hover:text-slate-200"}`}
-              >
-                <span className="text-lg">⚠️</span>
-                <span>Faults</span>
-              </button>
-              <button 
-                onClick={() => setCurrentScreen("history")}
-                className={`flex flex-col items-center ${currentScreen === "history" ? "text-sky-400 font-bold" : "hover:text-slate-200"}`}
-              >
-                <span className="text-lg">🕒</span>
-                <span>History</span>
-              </button>
-              <button 
-                onClick={() => setCurrentScreen("garage")}
-                className={`flex flex-col items-center ${currentScreen === "garage" ? "text-indigo-400 font-bold" : "hover:text-slate-200"}`}
-              >
-                <span className="text-lg">🚘</span>
-                <span>Garage</span>
-              </button>
-            </div>
-          )}
+          {/* Bottom App Navigation Bar (Always visible for easy navigation) */}
+          <div className="grid grid-cols-5 bg-white border-t border-slate-200 py-2.5 text-center text-[10px] text-slate-500 shadow-lg">
+            <button 
+              onClick={() => setCurrentScreen("home")}
+              className={`flex flex-col items-center transition-all ${currentScreen === "home" ? "text-blue-600 font-extrabold scale-105" : "hover:text-slate-800 font-semibold"}`}
+            >
+              <span className="text-xl">🏠</span>
+              <span>Home</span>
+            </button>
+            <button 
+              onClick={() => setCurrentScreen("live")}
+              className={`flex flex-col items-center transition-all ${currentScreen === "live" ? "text-blue-600 font-extrabold scale-105" : "hover:text-slate-800 font-semibold"}`}
+            >
+              <span className="text-xl">📈</span>
+              <span>Live Data</span>
+            </button>
+            <button 
+              onClick={() => setCurrentScreen("faults")}
+              className={`flex flex-col items-center transition-all ${currentScreen === "faults" ? "text-rose-600 font-extrabold scale-105" : "hover:text-slate-800 font-semibold"}`}
+            >
+              <span className="text-xl">⚠️</span>
+              <span>Faults</span>
+            </button>
+            <button 
+              onClick={() => setCurrentScreen("history")}
+              className={`flex flex-col items-center transition-all ${currentScreen === "history" ? "text-emerald-600 font-extrabold scale-105" : "hover:text-slate-800 font-semibold"}`}
+            >
+              <span className="text-xl">🕒</span>
+              <span>History</span>
+            </button>
+            <button 
+              onClick={() => setCurrentScreen("garage")}
+              className={`flex flex-col items-center transition-all ${currentScreen === "garage" ? "text-indigo-600 font-extrabold scale-105" : "hover:text-slate-800 font-semibold"}`}
+            >
+              <span className="text-xl">🚘</span>
+              <span>Garage</span>
+            </button>
+          </div>
         </div>
       );
     }

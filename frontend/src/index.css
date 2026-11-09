@@ -5,8 +5,8 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: #030712;
-  color: #f1f5f9;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
 .custom-scroll::-webkit-scrollbar {
@@ -14,8 +14,12 @@ body {
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Radar Animations */
@@ -42,4 +46,3 @@ body {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: 50% 50%;
 }
-

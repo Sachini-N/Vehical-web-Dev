@@ -10,120 +10,127 @@ export default function FaultsView({
   return (
     <div className="space-y-4">
       {/* Top Bar */}
-      <div className="flex items-center space-x-3 pb-2 border-b border-slate-800">
+      <div className="flex items-center space-x-3 pb-2 border-b border-slate-200">
         <button
           onClick={onBack}
-          className="p-1 hover:bg-slate-800 rounded-lg text-lg text-slate-300 transition-colors"
+          className="p-1 hover:bg-slate-200 rounded-lg text-lg text-slate-700 transition-colors"
         >
           ←
         </button>
-        <h2 className="text-lg font-bold">Faults</h2>
+        <h2 className="text-lg font-extrabold text-slate-900">Diagnostic Faults</h2>
       </div>
 
       {/* Main Alert Banner */}
       {activeDTCs.length > 0 ? (
-        <div className="bg-[#d92d20] rounded-2xl p-4 flex items-center space-x-3.5 text-white shadow-xl">
+        <div className="bg-gradient-to-r from-rose-600 to-red-600 rounded-2xl p-4 flex items-center space-x-3.5 text-white shadow-md shadow-rose-500/20">
           <span className="text-3xl">⚠️</span>
           <div>
-            <h3 className="font-bold text-base">Engine Fault Detected</h3>
-            <p className="text-xs text-red-100">
-              {activeDTCs.length} active fault(s) found
+            <h3 className="font-extrabold text-base">Engine Fault Detected</h3>
+            <p className="text-xs text-rose-100 font-medium">
+              {activeDTCs.length} active fault code(s) recorded in ECU
             </p>
           </div>
         </div>
       ) : (
-        <div className="bg-[#099250] rounded-2xl p-4 flex items-center space-x-3.5 text-white shadow-xl">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-4 flex items-center space-x-3.5 text-white shadow-md shadow-emerald-500/20">
           <span className="text-3xl">✅</span>
           <div>
-            <h3 className="font-bold text-base">Vehicle Condition: Normal</h3>
-            <p className="text-xs text-emerald-100">
-              No Known DTC Faults Detected
+            <h3 className="font-extrabold text-base">Vehicle Status: Normal</h3>
+            <p className="text-xs text-emerald-100 font-medium">
+              No DTC error codes detected in engine ECU
             </p>
           </div>
         </div>
       )}
 
-      <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">
-        Diagnostic Trouble Codes (DTC)
-      </h4>
+      <div className="flex justify-between items-center pt-1">
+        <h4 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+          Active Diagnostic Trouble Codes (DTC)
+        </h4>
+        {activeDTCs.length > 0 && (
+          <button
+            onClick={onClearCodes}
+            className="text-xs text-rose-600 hover:text-rose-800 font-bold underline"
+          >
+            Clear Codes (Mode 04)
+          </button>
+        )}
+      </div>
 
       {/* Faults Cards List */}
-      {activeDTCs.map((code) => {
-        const fault = DTC_DATABASE[code] || {
-          dtcCode: code,
-          sensor: 'ECU',
-          faultDescription: `Diagnostic Trouble Code (${code})`,
-          possibleCauses: ['Unrecognized code', 'Consult workshop manual'],
-          recommendedActions: ['Full electronic diagnostic scan'],
-          severity: 'Medium',
-        };
+      {activeDTCs.length === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-xs">
+          <span className="text-4xl block mb-2">🎉</span>
+          <h4 className="text-base font-extrabold text-slate-900">All Systems Clear</h4>
+          <p className="text-xs text-slate-500 mt-1">
+            Engine sensors are operating within optimal OEM thresholds.
+          </p>
+        </div>
+      ) : (
+        activeDTCs.map((code) => {
+          const fault = DTC_DATABASE[code] || {
+            dtcCode: code,
+            sensor: 'ECU',
+            faultDescription: `Diagnostic Trouble Code (${code})`,
+            possibleCauses: ['Unrecognized code', 'Consult workshop manual'],
+            recommendedActions: ['Full electronic diagnostic scan'],
+            severity: 'Medium',
+          };
 
-        return (
-          <div
-            key={code}
-            onClick={() => onSelectFault(fault)}
-            className="bg-[#101b2d] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 cursor-pointer transition-all shadow-md active:scale-[0.99]"
-          >
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <span className="text-rose-500 text-lg font-bold">!</span>
-                <span className="font-bold text-lg text-white font-mono">
-                  {fault.dtcCode}
+          return (
+            <div
+              key={code}
+              onClick={() => onSelectFault(fault)}
+              className="bg-white border border-slate-200/90 hover:border-blue-400 rounded-2xl p-4 cursor-pointer transition-all shadow-sm hover:shadow-md active:scale-[0.99]"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-600"></span>
+                  <span className="font-extrabold text-lg text-slate-900 font-mono">
+                    {fault.dtcCode}
+                  </span>
+                  <span className="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md uppercase">
+                    {fault.sensor}
+                  </span>
+                </div>
+                <span className="bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                  Active
                 </span>
               </div>
-              <span className="bg-rose-600/30 text-rose-300 border border-rose-500/50 text-[11px] font-bold px-2 py-0.5 rounded-full">
-                Active
-              </span>
-            </div>
 
-            <p className="text-sm text-slate-200 font-semibold mt-2">
-              {fault.faultDescription}
-            </p>
+              <p className="text-sm text-slate-800 font-bold mt-2">
+                {fault.faultDescription}
+              </p>
 
-            {/* Possible Causes Preview (Matches Slide 8 Screen 3) */}
-            <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300">
-              <span className="font-bold text-rose-400 block mb-1">
-                ⚠️ Possible Causes:
-              </span>
-              <ul className="list-disc list-inside space-y-0.5 text-slate-400 pl-1">
-                {fault.possibleCauses.slice(0, 3).map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Recommended Actions (Directly from Excel Sheet) */}
-            <div className="mt-3 pt-2.5 border-t border-slate-800/80 bg-emerald-950/20 -mx-4 -mb-4 p-3.5 rounded-b-2xl border-t border-emerald-900/30">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
-                  <span>🛠️</span>
-                  <span>Recommended Actions (කරන්න ඕන දේවල්):</span>
+              {/* Possible Causes Preview */}
+              <div className="mt-3 pt-2.5 border-t border-slate-100 text-xs">
+                <span className="font-bold text-rose-700 block mb-1">
+                  ⚠️ Possible Causes:
                 </span>
-                <span className="text-[10px] text-sky-400 font-bold">Details ›</span>
+                <ul className="list-disc list-inside space-y-0.5 text-slate-600 pl-1 font-medium">
+                  {fault.possibleCauses.slice(0, 3).map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-1 text-xs text-emerald-200/90">
-                {fault.recommendedActions.slice(0, 3).map((a, i) => (
-                  <li key={i} className="flex items-start space-x-1.5">
-                    <span className="text-emerald-400 font-bold">✓</span>
-                    <span>{a}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        );
-      })}
 
-      {/* Clear Codes Button (Matches Slide 8) */}
-      {activeDTCs.length > 0 && (
-        <button
-          onClick={onClearCodes}
-          className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 font-bold text-white rounded-xl shadow-lg transition-all"
-        >
-          Clear Fault Codes
-        </button>
+              {/* Recommended Actions */}
+              <div className="mt-3 pt-2.5 border-t border-emerald-100 bg-emerald-50/70 -mx-4 -mb-4 p-3.5 rounded-b-2xl">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center space-x-1">
+                    <span>🛠️</span>
+                    <span>Recommended Actions:</span>
+                  </span>
+                  <span className="text-[11px] text-blue-700 font-bold">Details ›</span>
+                </div>
+                <div className="text-xs text-slate-700 font-medium">
+                  {fault.recommendedActions[0] || 'Inspect sensor wiring and vacuum connections.'}
+                </div>
+              </div>
+            </div>
+          );
+        })
       )}
     </div>
   );
 }
-

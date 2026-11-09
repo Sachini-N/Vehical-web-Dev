@@ -24,7 +24,6 @@ export default function AuthView({ onAuthSuccess, onBack }) {
 
   // Extract unique brands from our 28 vehicle database
   const brands = [...new Set(VEHICLES.map((v) => v.brand))];
-  // Filter models for the selected brand
   const availableModels = VEHICLES.filter((v) => v.brand === vehicleBrand);
 
   const handleBrandChange = (brand) => {
@@ -43,7 +42,7 @@ export default function AuthView({ onAuthSuccess, onBack }) {
     try {
       if (mode === 'register') {
         if (!fullName.trim() || !email.trim() || !password.trim()) {
-          setErrorMsg('Please enter your Name, Email, and Password.');
+          setErrorMsg('Please enter your Full Name, Email, and Password.');
           setLoading(false);
           return;
         }
@@ -96,79 +95,80 @@ export default function AuthView({ onAuthSuccess, onBack }) {
 
   return (
     <div className="space-y-4">
-      {/* Top Bar */}
-      <div className="text-center pt-2 pb-1">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-2xl shadow-xl shadow-sky-500/20 mb-2.5">
+      {/* Top Header */}
+      <div className="flex items-center space-x-3 pb-2 border-b border-slate-200">
+        <button
+          onClick={onBack}
+          className="p-1 hover:bg-slate-200 rounded-lg text-lg text-slate-700 transition-colors"
+        >
+          ←
+        </button>
+        <h2 className="text-lg font-extrabold text-slate-900">
+          {mode === 'register' ? 'Register Account & Vehicle' : 'Driver Login'}
+        </h2>
+      </div>
+
+      <div className="text-center pt-1 pb-1">
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-3xl shadow-md shadow-blue-500/20 mb-2">
           🚗
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-white">
-          OBD II Vehicle Diagnostic
+        <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
+          OBD-II Vehicle Diagnostic
         </h1>
-        <p className="text-xs text-sky-400 font-medium mt-0.5">
-          Real-Time Engine Fault Detection System
-        </p>
-        <p className="text-[11px] text-slate-400 mt-1">
-          Register your account & vehicle to enter the dashboard
+        <p className="text-xs text-blue-600 font-bold mt-0.5">
+          Real-Time Engine Fault Detection & Recommendation System
         </p>
       </div>
 
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-        <span className="text-xs font-bold uppercase text-slate-400 tracking-wider">
-          {mode === 'register' ? 'New User Registration' : 'Account Login'}
-        </span>
-
-        {/* Tab switch */}
-        <div className="flex bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
-          <button
-            type="button"
-            onClick={() => {
-              setMode('register');
-              setErrorMsg('');
-            }}
-            className={`px-3 py-1 rounded-md font-semibold transition-all ${
-              mode === 'register'
-                ? 'bg-sky-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Register
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode('login');
-              setErrorMsg('');
-            }}
-            className={`px-3 py-1 rounded-md font-semibold transition-all ${
-              mode === 'login'
-                ? 'bg-sky-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Login
-          </button>
-        </div>
+      {/* Switch Tab */}
+      <div className="flex justify-between items-center bg-slate-200/80 p-1 rounded-2xl">
+        <button
+          type="button"
+          onClick={() => {
+            setMode('register');
+            setErrorMsg('');
+          }}
+          className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all ${
+            mode === 'register'
+              ? 'bg-white text-blue-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          Register Driver & Vehicle
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setMode('login');
+            setErrorMsg('');
+          }}
+          className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all ${
+            mode === 'login'
+              ? 'bg-white text-blue-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          Login
+        </button>
       </div>
 
       {errorMsg && (
-        <div className="p-3 bg-rose-950/40 border border-rose-500/50 rounded-xl text-xs text-rose-300">
+        <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-800 font-bold">
           ⚠️ {errorMsg}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-3.5">
-        {/* ============================================================== */}
-        {/* SECTION 1: USER DETAILS */}
-        {/* ============================================================== */}
-        <div className="bg-[#101b2d] border border-slate-800/80 rounded-2xl p-4 shadow space-y-3">
-          <h3 className="text-xs font-bold uppercase text-sky-400 tracking-wider flex items-center space-x-1.5">
+        {/* SECTION 1: DRIVER DETAILS */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+          <h3 className="text-xs font-extrabold uppercase text-slate-700 tracking-wider flex items-center space-x-1.5">
             <span>👤</span>
             <span>Driver / Owner Profile</span>
           </h3>
 
           {mode === 'register' && (
             <div>
-              <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">
                 Full Name
               </label>
               <input
@@ -176,13 +176,13 @@ export default function AuthView({ onAuthSuccess, onBack }) {
                 placeholder="e.g. Kasun Perera"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl px-3 py-2 text-xs text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
           )}
 
           <div>
-            <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+            <label className="text-[11px] font-bold text-slate-700 block mb-1">
               Email Address
             </label>
             <input
@@ -190,12 +190,12 @@ export default function AuthView({ onAuthSuccess, onBack }) {
               placeholder="e.g. driver@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+              className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl px-3 py-2 text-xs text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+            <label className="text-[11px] font-bold text-slate-700 block mb-1">
               Password
             </label>
             <input
@@ -203,13 +203,13 @@ export default function AuthView({ onAuthSuccess, onBack }) {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+              className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl px-3 py-2 text-xs text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
           {mode === 'register' && (
             <div>
-              <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">
                 Phone Number (Optional)
               </label>
               <input
@@ -217,32 +217,30 @@ export default function AuthView({ onAuthSuccess, onBack }) {
                 placeholder="e.g. 077 123 4567"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl px-3 py-2 text-xs text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
           )}
         </div>
 
-        {/* ============================================================== */}
         {/* SECTION 2: VEHICLE REGISTRATION (Only in Register mode) */}
-        {/* ============================================================== */}
         {mode === 'register' && (
-          <div className="bg-[#101b2d] border border-slate-800/80 rounded-2xl p-4 shadow space-y-3">
-            <h3 className="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center space-x-1.5">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+            <h3 className="text-xs font-extrabold uppercase text-emerald-800 tracking-wider flex items-center space-x-1.5">
               <span>🚗</span>
-              <span>Vehicle Registration (OBD-II Database)</span>
+              <span>Vehicle Details (Excel 28 Vehicles)</span>
             </h3>
 
             {/* Brand & Model Dropdowns */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                  Brand (Excel DB)
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Brand
                 </label>
                 <select
                   value={vehicleBrand}
                   onChange={(e) => handleBrandChange(e.target.value)}
-                  className="w-full bg-[#071120] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-2.5 py-2 text-xs text-slate-900 font-semibold focus:outline-none"
                 >
                   {brands.map((b) => (
                     <option key={b} value={b}>
@@ -253,13 +251,13 @@ export default function AuthView({ onAuthSuccess, onBack }) {
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
                   Model
                 </label>
                 <select
                   value={vehicleModel}
                   onChange={(e) => setVehicleModel(e.target.value)}
-                  className="w-full bg-[#071120] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-2.5 py-2 text-xs text-slate-900 font-semibold focus:outline-none"
                 >
                   {availableModels.map((m) => (
                     <option key={m.model} value={m.model}>
@@ -273,42 +271,41 @@ export default function AuthView({ onAuthSuccess, onBack }) {
             {/* License Plate & Year */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                  Vehicle No / Plate
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  License Plate
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. WP CAC-4589"
                   value={licensePlate}
                   onChange={(e) => setLicensePlate(e.target.value)}
-                  className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3 py-2 text-xs text-slate-900 font-mono font-bold uppercase focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                  Year of Manufacture
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Year
                 </label>
                 <input
                   type="number"
                   placeholder="2018"
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
-                  className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3 py-2 text-xs text-slate-900 font-medium focus:outline-none"
                 />
               </div>
             </div>
 
-            {/* Fuel Type & Current Mileage */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
                   Fuel Type
                 </label>
                 <select
                   value={fuelType}
                   onChange={(e) => setFuelType(e.target.value)}
-                  className="w-full bg-[#071120] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-2.5 py-2 text-xs text-slate-900 font-medium focus:outline-none"
                 >
                   <option value="Petrol / Hybrid">Petrol / Hybrid</option>
                   <option value="Petrol">Petrol</option>
@@ -318,66 +315,29 @@ export default function AuthView({ onAuthSuccess, onBack }) {
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                  Current Mileage (km)
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Odometer (km)
                 </label>
                 <input
                   type="number"
                   placeholder="68500"
                   value={mileage}
                   onChange={(e) => setMileage(e.target.value)}
-                  className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3 py-2 text-xs text-slate-900 font-medium focus:outline-none"
                 />
               </div>
             </div>
           </div>
         )}
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-[0.99] disabled:opacity-50"
+          className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-sm rounded-2xl shadow-md shadow-blue-500/20 transition-all active:scale-[0.99]"
         >
-          {loading ? (
-            <span>Saving to MongoDB...</span>
-          ) : mode === 'register' ? (
-            <span>✓ Register Vehicle & Enter App</span>
-          ) : (
-            <span>Sign In & Enter Dashboard</span>
-          )}
-        </button>
-
-        {/* Demo Bypass Button */}
-        <button
-          type="button"
-          onClick={() => {
-            const demoUser = {
-              _id: 'demo_user',
-              fullName: 'Kasun Perera',
-              email: 'kasun@gmail.com',
-              phone: '077 123 4567',
-              vehicles: [
-                {
-                  _id: 'veh_demo',
-                  brand: 'SUZUKI',
-                  model: 'Wagon R',
-                  licensePlate: 'WP CAC-4589',
-                  year: 2018,
-                  fuelType: 'Petrol / Hybrid',
-                  mileage: 68500,
-                  isPrimary: true,
-                },
-              ],
-            };
-            onAuthSuccess(demoUser);
-          }}
-          className="w-full py-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition-all"
-        >
-          ⚡ Skip & Enter as Demo Driver (Suzuki Wagon R) →
+          {loading ? 'Please wait...' : mode === 'register' ? 'Register & Enter Dashboard' : 'Sign In'}
         </button>
       </form>
     </div>
   );
 }
-

@@ -59,10 +59,11 @@ export default function GarageView({
 
   const vehicles = user?.vehicles || [
     {
+      _id: 'v1',
       brand: activeVehicle.brand,
       model: activeVehicle.model,
-      licensePlate: 'WP CAC-4589',
-      year: 2018,
+      licensePlate: activeVehicle.licensePlate || 'WP CAC-4589',
+      year: activeVehicle.year || 2018,
       fuelType: 'Petrol / Hybrid',
       mileage: 68500,
       isPrimary: true,
@@ -71,96 +72,88 @@ export default function GarageView({
 
   return (
     <div className="space-y-4">
-      {/* Top Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
         <div className="flex items-center space-x-3">
           <button
             onClick={onBack}
-            className="p-1 hover:bg-slate-800 rounded-lg text-lg text-slate-300 transition-colors"
+            className="p-1 hover:bg-slate-200 rounded-lg text-lg text-slate-700 transition-colors"
           >
             ←
           </button>
-          <h2 className="text-lg font-bold">My Garage & Profile</h2>
+          <h2 className="text-lg font-extrabold text-slate-900">My Garage</h2>
         </div>
         <button
           onClick={onLogout}
-          className="text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-800/50"
+          className="text-xs text-rose-600 hover:text-rose-800 font-bold"
         >
           Logout
         </button>
       </div>
 
-      {/* Driver Profile Card */}
-      <div className="bg-[#101b2d] border border-slate-800 rounded-2xl p-4 shadow flex items-center space-x-3.5">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-xl font-bold text-white shadow-md">
-          {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'D'}
+      {/* Driver Card */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-2xl">
+            👤
+          </div>
+          <div>
+            <h3 className="font-extrabold text-base text-slate-900">{user?.fullName || 'Registered Driver'}</h3>
+            <p className="text-xs text-slate-500 font-medium">{user?.email || 'driver@example.com'}</p>
+          </div>
         </div>
-        <div className="flex-1">
-          <h3 className="font-bold text-base text-white">
-            {user?.fullName || 'Registered Vehicle Owner'}
-          </h3>
-          <p className="text-xs text-slate-400">{user?.email || 'driver@car.lk'}</p>
-          {user?.phone && (
-            <p className="text-[11px] text-sky-400 mt-0.5">📞 {user.phone}</p>
-          )}
-        </div>
+        <span className="text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full">
+          Active Account
+        </span>
       </div>
 
-      {/* Registered Vehicles Section */}
-      <div>
-        <div className="flex justify-between items-center mb-2.5">
-          <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider">
+      {/* Vehicles List */}
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider">
             Registered Vehicles ({vehicles.length})
-          </h3>
+          </h4>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="text-xs font-semibold text-sky-400 hover:text-sky-300 flex items-center space-x-1"
+            className="text-xs text-blue-600 hover:text-blue-800 font-bold"
           >
-            <span>{showAddForm ? '✕ Cancel' : '+ Add Vehicle'}</span>
+            {showAddForm ? '✕ Close Form' : '+ Add New Vehicle'}
           </button>
         </div>
 
-        {/* Add New Vehicle Accordion Form */}
+        {/* Add Vehicle Form */}
         {showAddForm && (
           <form
             onSubmit={handleAddVehicle}
-            className="bg-[#0b1424] border border-sky-500/40 rounded-2xl p-4 mb-3 space-y-3 shadow-lg"
+            className="bg-white border border-blue-200 rounded-2xl p-4 shadow-sm space-y-3"
           >
-            <h4 className="text-xs font-bold text-sky-300">
-              Register Another Vehicle
+            <h4 className="text-xs font-extrabold text-slate-900 uppercase">
+              Register New Vehicle (Excel Database)
             </h4>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-slate-300 block mb-1">
-                  Brand
-                </label>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Brand</label>
                 <select
                   value={vehicleBrand}
                   onChange={(e) => handleBrandChange(e.target.value)}
-                  className="w-full bg-[#101b2d] border border-slate-700 rounded-lg p-2 text-xs text-white"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 font-medium"
                 >
                   {brands.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
+                    <option key={b} value={b}>{b}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-300 block mb-1">
-                  Model
-                </label>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Model</label>
                 <select
                   value={vehicleModel}
                   onChange={(e) => setVehicleModel(e.target.value)}
-                  className="w-full bg-[#101b2d] border border-slate-700 rounded-lg p-2 text-xs text-white"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 font-medium"
                 >
                   {availableModels.map((m) => (
-                    <option key={m.model} value={m.model}>
-                      {m.model}
-                    </option>
+                    <option key={m.model} value={m.model}>{m.model}</option>
                   ))}
                 </select>
               </div>
@@ -168,111 +161,82 @@ export default function GarageView({
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-slate-300 block mb-1">
-                  License Plate
-                </label>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">License Plate</label>
                 <input
                   type="text"
-                  placeholder="e.g. WP-CAB-1234"
+                  placeholder="e.g. WP-CAA-1234"
                   value={licensePlate}
                   onChange={(e) => setLicensePlate(e.target.value)}
-                  className="w-full bg-[#101b2d] border border-slate-700 rounded-lg p-2 text-xs text-white font-mono uppercase"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 font-mono font-bold uppercase"
                 />
               </div>
-
               <div>
-                <label className="text-[10px] text-slate-300 block mb-1">
-                  Year
-                </label>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Year</label>
                 <input
                   type="number"
+                  placeholder="2019"
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
-                  className="w-full bg-[#101b2d] border border-slate-700 rounded-lg p-2 text-xs text-white"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-900"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 font-bold text-xs text-white rounded-lg shadow"
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs"
             >
-              Save Vehicle to Account
+              Save Vehicle to Garage
             </button>
           </form>
         )}
 
-        {/* Vehicle Cards List */}
-        <div className="space-y-2.5">
-          {vehicles.map((v, idx) => {
-            const isActive =
-              activeVehicle.brand === v.brand &&
-              activeVehicle.model === v.model;
+        {vehicles.map((v, i) => {
+          const isSelected = activeVehicle.brand === v.brand && activeVehicle.model === v.model;
 
-            return (
-              <div
-                key={idx}
-                className={`p-4 rounded-2xl border transition-all ${
-                  isActive
-                    ? 'bg-sky-950/40 border-sky-500/70 shadow-lg'
-                    : 'bg-[#101b2d] border-slate-800'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-sky-400 tracking-wider">
-                      {v.brand}
+          return (
+            <div
+              key={i}
+              className={`bg-white border rounded-2xl p-4 shadow-sm transition-all ${
+                isSelected
+                  ? 'border-blue-400 ring-2 ring-blue-100'
+                  : 'border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-extrabold text-base text-slate-900">
+                      {v.brand} {v.model}
                     </span>
-                    <h4 className="text-base font-bold text-white mt-0.5">
-                      {v.model}
-                    </h4>
+                    {v.licensePlate && (
+                      <span className="bg-amber-50 border border-amber-300 text-amber-900 font-mono text-[10px] font-bold px-2 py-0.5 rounded">
+                        {v.licensePlate}
+                      </span>
+                    )}
                   </div>
-                  {isActive ? (
-                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      ✓ Active Scanner
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() =>
-                        onSelectActiveVehicle({
-                          brand: v.brand,
-                          model: v.model,
-                          licensePlate: v.licensePlate,
-                        })
-                      }
-                      className="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 px-2.5 py-1 rounded-lg border border-slate-700"
-                    >
-                      Select Car
-                    </button>
-                  )}
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    {v.year} • {v.fuelType || 'Petrol / Hybrid'} • {v.mileage || '68,500'} km
+                  </p>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-[11px] text-slate-300">
-                  <div>
-                    <span className="text-[9px] text-slate-500 block">PLATE</span>
-                    <span className="font-mono font-semibold text-slate-200">
-                      {v.licensePlate || 'N/A'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-slate-500 block">YEAR</span>
-                    <span className="font-semibold text-slate-200">
-                      {v.year || 2018}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-slate-500 block">MILEAGE</span>
-                    <span className="font-semibold text-slate-200">
-                      {v.mileage ? `${v.mileage.toLocaleString()} km` : '68,500 km'}
-                    </span>
-                  </div>
-                </div>
+                {isSelected ? (
+                  <span className="bg-blue-600 text-white font-bold text-xs px-2.5 py-1 rounded-full shadow-xs">
+                    ✓ Active
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => onSelectActiveVehicle(v)}
+                    className="px-3 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold text-xs rounded-xl border border-slate-200"
+                  >
+                    Select
+                  </button>
+                )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
-
