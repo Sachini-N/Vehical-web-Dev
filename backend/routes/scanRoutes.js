@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const ScanHistory = require('../models/ScanHistory');
 
-// In-memory fallback if MongoDB connection is pending
+const isDbConnected = () => mongoose.connection.readyState === 1;
+
+// In-memory fallback if MongoDB connection is pending or offline
 let localScanCache = [];
 
 // POST /api/scans - Save a new vehicle scan result
@@ -28,45 +31,51 @@ router.post('/', async (req, res) => {
     mlAnalysis: mlAnalysis || { predictedCondition: 'Normal', confidence: 1.0 },
   };
 
-  try {
-    const saved = await ScanHistory.create(scanRecord);
-    res.status(201).json({ success: true, data: saved });
-  } catch (error) {
-    scanRecord._id = 'local_' + Date.now();
-    localScanCache.unshift(scanRecord);
-    res.status(201).json({ success: true, data: scanRecord, note: 'Saved in local fallback' });
+  if (isDbConnected()) {
+    try {
+      const saved = await ScanHistory.create(scanRecord);
+      return res.status(201).json({ success: true, data: saved });
+    } catch (error) {
+      // Fall through to local fallback
+    }
   }
+
+  scanRecord._id = 'local_' + Date.now();
+  localScanCache.unshift(scanRecord);
+  return res.status(201).json({ success: true, data: scanRecord, note: 'Saved in local fallback' });
 });
 
 // GET /api/scans - Retrieve recent scan history
 router.get('/', async (req, res) => {
-  try {
-    const history = await ScanHistory.find().sort({ scanDate: -1 }).limit(50);
-    if (history && history.length > 0) {
-      return res.json({ success: true, count: history.length, data: history });
+  if (isDbConnected()) {
+    try {
+      const history = await ScanHistory.find().sort({ scanDate: -1 }).limit(50);
+      if (history && history.length > 0) {
+        return res.json({ success: true, count: history.length, data: history });
+      }
+    } catch (error) {
+      // Fall through to local fallback
     }
-    return res.json({ success: true, count: localScanCache.length, data: localScanCache });
-  } catch (error) {
-    return res.json({ success: true, count: localScanCache.length, data: localScanCache });
   }
+  return res.json({ success: true, count: localScanCache.length, data: localScanCache });
 });
 
 // GET /api/scans/:id - Retrieve specific scan details
 router.get('/:id', async (req, res) => {
-  try {
-    const scan = await ScanHistory.findById(req.params.id);
-    if (!scan) {
-      const fallback = localScanCache.find((s) => s._id === req.params.id);
-      if (fallback) return res.json({ success: true, data: fallback });
-      return res.status(404).json({ success: false, message: 'Scan not found' });
+  if (isDbConnected()) {
+    try {
+      const scan = await ScanHistory.findById(req.params.id);
+      if (scan) {
+        return res.json({ success: true, data: scan });
+      }
+    } catch (error) {
+      // Fall through to local fallback
     }
-    res.json({ success: true, data: scan });
-  } catch (error) {
-    const fallback = localScanCache.find((s) => s._id === req.params.id);
-    if (fallback) return res.json({ success: true, data: fallback });
-    res.status(500).json({ success: false, message: error.message });
   }
+
+  const fallback = localScanCache.find((s) => s._id === req.params.id);
+  if (fallback) return res.json({ success: true, data: fallback });
+  return res.status(404).json({ success: false, message: 'Scan not found' });
 });
 
 module.exports = router;
-

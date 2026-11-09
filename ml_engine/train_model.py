@@ -14,11 +14,15 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 
-dataset_file = 'sensor_fault_dataset.csv'
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+dataset_file = os.path.join(SCRIPT_DIR, 'sensor_fault_dataset.csv')
 
 # 1. Check or generate dataset
 if not os.path.exists(dataset_file):
     print("[ML] Generating synthetic sensor telemetry dataset...")
+    import sys
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
     import generate_dataset
 
 df = pd.read_csv(dataset_file)
@@ -65,8 +69,10 @@ for feat, imp in importances.items():
     print(f"  - {feat.upper():<6}: {imp * 100:.2f}%")
 
 # 8. Save Model and Scaler
-joblib.dump(rf_classifier, 'random_forest_model.pkl')
-joblib.dump(scaler, 'sensor_scaler.pkl')
-print("\n✓ Model saved as 'random_forest_model.pkl'")
-print("✓ Scaler saved as 'sensor_scaler.pkl'")
+model_path = os.path.join(SCRIPT_DIR, 'random_forest_model.pkl')
+scaler_path = os.path.join(SCRIPT_DIR, 'sensor_scaler.pkl')
+joblib.dump(rf_classifier, model_path)
+joblib.dump(scaler, scaler_path)
+print(f"\n✓ Model saved as '{model_path}'")
+print(f"✓ Scaler saved as '{scaler_path}'")
 

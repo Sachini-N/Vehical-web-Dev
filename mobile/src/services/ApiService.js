@@ -10,7 +10,7 @@ try {
   seedData = require('../../backend/seed/seedData.json');
 }
 
-const API_BASE_URL = 'http://10.0.2.2:5000/api'; // Android Emulator alias for localhost (or production server IP)
+const API_BASE_URL = 'http://10.0.2.2:5001/api'; // Android Emulator alias for localhost (or production server IP)
 
 class ApiService {
   /**

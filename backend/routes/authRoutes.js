@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
+
+const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // In-memory fallback if MongoDB connection is offline
 let localUsers = [
@@ -62,59 +65,70 @@ router.post('/register', async (req, res) => {
     registeredAt: new Date(),
   };
 
-  try {
-    // Check if user already exists in MongoDB
-    const existing = await User.findOne({ email: email.toLowerCase() });
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: 'An account with this email already exists.',
+  if (isDbConnected()) {
+    try {
+      // Check if user already exists in MongoDB
+      const existing = await User.findOne({ email: email.toLowerCase() });
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message: 'An account with this email already exists.',
+        });
+      }
+
+      const newUser = await User.create({
+        fullName,
+        email: email.toLowerCase(),
+        password, // In production, use bcrypt.hash()
+        phone: phone || '',
+        vehicles: [initialVehicle],
       });
-    }
 
-    const newUser = await User.create({
-      fullName,
-      email: email.toLowerCase(),
-      password, // In production, use bcrypt.hash()
-      phone: phone || '',
-      vehicles: [initialVehicle],
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: 'User and vehicle registered successfully!',
-      user: {
-        _id: newUser._id,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        phone: newUser.phone,
-        vehicles: newUser.vehicles,
-      },
-    });
-  } catch (error) {
-    // Fallback to local memory if MongoDB is disconnected
-    console.log('[Auth API] MongoDB offline, storing in local fallback memory.');
-    const localUser = {
-      _id: 'user_' + Date.now(),
-      fullName,
-      email: email.toLowerCase(),
-      password,
-      phone: phone || '',
-      vehicles: [
-        {
-          _id: 'veh_' + Date.now(),
-          ...initialVehicle,
+      return res.status(201).json({
+        success: true,
+        message: 'User and vehicle registered successfully!',
+        user: {
+          _id: newUser._id,
+          fullName: newUser.fullName,
+          email: newUser.email,
+          phone: newUser.phone,
+          vehicles: newUser.vehicles,
         },
-      ],
-    };
-    localUsers.push(localUser);
+      });
+    } catch (error) {
+      console.log('[Auth API] MongoDB query failed, storing in local fallback memory.');
+    }
+  }
 
-    return res.status(201).json({
-      success: true,
-      message: 'User and vehicle registered successfully (Local Session)!',
-      user: localUser,
+  // Fallback to local memory if MongoDB is disconnected or query failed
+  const existingLocal = localUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (existingLocal) {
+    return res.status(400).json({
+      success: false,
+      message: 'An account with this email already exists.',
     });
   }
+
+  const localUser = {
+    _id: 'user_' + Date.now(),
+    fullName,
+    email: email.toLowerCase(),
+    password,
+    phone: phone || '',
+    vehicles: [
+      {
+        _id: 'veh_' + Date.now(),
+        ...initialVehicle,
+      },
+    ],
+  };
+  localUsers.push(localUser);
+
+  return res.status(201).json({
+    success: true,
+    message: 'User and vehicle registered successfully (Local Session)!',
+    user: localUser,
+  });
 });
 
 // POST /api/auth/login - User login
@@ -128,27 +142,29 @@ router.post('/login', async (req, res) => {
     });
   }
 
-  try {
-    const user = await User.findOne({
-      email: email.toLowerCase().trim(),
-      password: password,
-    });
-
-    if (user) {
-      return res.json({
-        success: true,
-        message: 'Login successful',
-        user: {
-          _id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          phone: user.phone,
-          vehicles: user.vehicles,
-        },
+  if (isDbConnected()) {
+    try {
+      const user = await User.findOne({
+        email: email.toLowerCase().trim(),
+        password: password,
       });
+
+      if (user) {
+        return res.json({
+          success: true,
+          message: 'Login successful',
+          user: {
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            phone: user.phone,
+            vehicles: user.vehicles,
+          },
+        });
+      }
+    } catch (error) {
+      // Fall through to local fallback
     }
-  } catch (error) {
-    // Try local fallback
   }
 
   const localUser = localUsers.find(
@@ -196,17 +212,19 @@ router.post('/vehicles', async (req, res) => {
     registeredAt: new Date(),
   };
 
-  try {
-    if (userId) {
-      const user = await User.findById(userId);
-      if (user) {
-        user.vehicles.push(newVehicle);
-        await user.save();
-        return res.json({ success: true, vehicles: user.vehicles });
+  if (isDbConnected()) {
+    try {
+      if (userId) {
+        const user = await User.findById(userId);
+        if (user) {
+          user.vehicles.push(newVehicle);
+          await user.save();
+          return res.json({ success: true, vehicles: user.vehicles });
+        }
       }
+    } catch (e) {
+      // MongoDB offline fallback
     }
-  } catch (e) {
-    // MongoDB offline fallback
   }
 
   // Update local memory
@@ -221,4 +239,3 @@ router.post('/vehicles', async (req, res) => {
 });
 
 module.exports = router;
-

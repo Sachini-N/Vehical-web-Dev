@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const DtcFault = require('../models/DtcFault');
 const seedData = require('../seed/seedData.json');
+
+const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // Helper to find fault in static seed data if MongoDB is offline
 const findStaticFault = (brand, model, dtcCode) => {
@@ -33,22 +36,25 @@ router.get('/match', async (req, res) => {
   const cleanModel = model ? model.trim() : '';
 
   try {
-    // 1. Try exact vehicle-specific match
     let fault = null;
-    if (cleanBrand && cleanModel) {
-      fault = await DtcFault.findOne({
-        vehicleBrand: cleanBrand,
-        vehicleModel: { $regex: new RegExp(`^${cleanModel}$`, 'i') },
-        dtcCode: cleanDtc,
-      });
+
+    if (isDbConnected()) {
+      // 1. Try exact vehicle-specific match
+      if (cleanBrand && cleanModel) {
+        fault = await DtcFault.findOne({
+          vehicleBrand: cleanBrand,
+          vehicleModel: { $regex: new RegExp(`^${cleanModel}$`, 'i') },
+          dtcCode: cleanDtc,
+        });
+      }
+
+      // 2. Fallback to generic DTC entry if model-specific record is missing
+      if (!fault) {
+        fault = await DtcFault.findOne({ dtcCode: cleanDtc });
+      }
     }
 
-    // 2. Fallback to generic DTC entry if model-specific record is missing
-    if (!fault) {
-      fault = await DtcFault.findOne({ dtcCode: cleanDtc });
-    }
-
-    // 3. Fallback to static seed data
+    // 3. Fallback to static seed data (instant if offline)
     if (!fault) {
       fault = findStaticFault(cleanBrand, cleanModel, cleanDtc);
     }
@@ -110,23 +116,27 @@ router.post('/batch-match', async (req, res) => {
   const cleanBrand = brand ? brand.toUpperCase().trim() : '';
   const cleanModel = model ? model.trim() : '';
   const results = [];
+  const dbActive = isDbConnected();
 
   for (const code of dtcCodes) {
     const cleanDtc = code.toUpperCase().trim();
     let fault = null;
-    try {
-      if (cleanBrand && cleanModel) {
-        fault = await DtcFault.findOne({
-          vehicleBrand: cleanBrand,
-          vehicleModel: { $regex: new RegExp(`^${cleanModel}$`, 'i') },
-          dtcCode: cleanDtc,
-        });
+
+    if (dbActive) {
+      try {
+        if (cleanBrand && cleanModel) {
+          fault = await DtcFault.findOne({
+            vehicleBrand: cleanBrand,
+            vehicleModel: { $regex: new RegExp(`^${cleanModel}$`, 'i') },
+            dtcCode: cleanDtc,
+          });
+        }
+        if (!fault) {
+          fault = await DtcFault.findOne({ dtcCode: cleanDtc });
+        }
+      } catch (e) {
+        // ignore db error, fallback to static
       }
-      if (!fault) {
-        fault = await DtcFault.findOne({ dtcCode: cleanDtc });
-      }
-    } catch (e) {
-      // ignore db error, fallback to static
     }
 
     if (!fault) {
@@ -158,4 +168,3 @@ router.post('/batch-match', async (req, res) => {
 });
 
 module.exports = router;
-

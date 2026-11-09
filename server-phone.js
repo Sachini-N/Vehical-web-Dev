@@ -54,7 +54,6 @@ const server = http.createServer((req, res) => {
 
   // Route: /qr - Shows QR Code to easily open on phone
   if (url === '/qr') {
-    const targetUrl = `http://${localIP}:${PORT}`;
     const targetUrl = `http://${currentIP}:${PORT}`;
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetUrl)}`;
     const qrPage = `<!DOCTYPE html>
@@ -96,7 +95,6 @@ const server = http.createServer((req, res) => {
   // Route: /api/health
   if (url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', ip: localIP, port: PORT }));
     res.end(JSON.stringify({ status: 'ok', ip: currentIP, port: PORT }));
     return;
   }

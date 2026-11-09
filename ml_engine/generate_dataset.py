@@ -9,11 +9,15 @@ Generates a realistic automotive sensor telemetry dataset for the 5 target senso
 plus Engine RPM and Vehicle Speed.
 """
 
+import os
 import numpy as np
 import pandas as pd
 
 np.random.seed(42)
 num_samples = 5000
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+dataset_file = os.path.join(SCRIPT_DIR, 'sensor_fault_dataset.csv')
 
 data = []
 
@@ -80,7 +84,7 @@ for _ in range(num_samples):
     })
 
 df = pd.DataFrame(data)
-df.to_csv('sensor_fault_dataset.csv', index=False)
+df.to_csv(dataset_file, index=False)
 print(f"Dataset generated successfully with {len(df)} samples.")
 print(df['fault_type'].value_counts())
 

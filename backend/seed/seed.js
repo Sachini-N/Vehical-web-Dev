@@ -1,10 +1,12 @@
+const path = require('path');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const Vehicle = require('../models/Vehicle');
 const DtcFault = require('../models/DtcFault');
 const seedData = require('./seedData.json');
 
-dotenv.config({ path: '../.env' });
+// Ensure .env is resolved correctly regardless of process working directory
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vehicle_fault_db';
 
