@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#030712">
+  <title>OBD-II Vehicle Fault Detection & Registration (React + MongoDB)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & Babel CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      background-color: #030712;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    @keyframes radarSweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .radar-sweep {
+      animation: radarSweep 2.5s linear infinite;
+    }
+    @keyframes sonarPulse {
+      0% { transform: scale(0.8); opacity: 0.8; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .sonar-ring {
+      animation: sonarPulse 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+    }
+    .gauge-needle {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: 50% 50%;
+    }
+  </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 sm:p-6 bg-slate-950 overflow-x-hidden">
+
+  <div id="root" class="w-full max-w-md bg-[#0a1220] border-0 sm:border sm:border-slate-800 sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[100dvh] sm:h-[860px] relative"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // 28 Supported Vehicles from Excel
+    const VEHICLES = [
+      { brand: "SUZUKI", model: "Wagon R" },
+      { brand: "SUZUKI", model: "Every" },
+      { brand: "SUZUKI", model: "Swift" },
+      { brand: "SUZUKI", model: "Celerio" },
+      { brand: "SUZUKI", model: "Hustler" },
+      { brand: "SUZUKI", model: "Spacia" },
+      { brand: "TOYOTA", model: "CHR" },
+      { brand: "TOYOTA", model: "Axio" },
+      { brand: "TOYOTA", model: "Prius" },
+      { brand: "TOYOTA", model: "Vitz" },
+      { brand: "TOYOTA", model: "Aqua" },
+      { brand: "TOYOTA", model: "Premio" },
+      { brand: "TOYOTA", model: "Harrier" },
+      { brand: "TOYOTA", model: "Raize" },
+      { brand: "TOYOTA", model: "Passo" },
+      { brand: "HONDA", model: "Vezel" },
+      { brand: "HONDA", model: "Insight" },
+      { brand: "HONDA", model: "Insight GP1" },
+      { brand: "HONDA", model: "Insight GP2" },
+      { brand: "HONDA", model: "Insight GP3" },
+      { brand: "HONDA", model: "Insight GP4" },
+      { brand: "HONDA", model: "Insight GP5" },
+      { brand: "HONDA", model: "Civic" },
+      { brand: "HONDA", model: "CR-V" },
+      { brand: "NISSAN", model: "Bluebird" },
+      { brand: "NISSAN", model: "X-Trail" },
+      { brand: "MITSUBISHI", model: "Outlander" },
+      { brand: "MICRO", model: "MG" }
+    ];
+
+    const DTC_DATABASE = {
+    "P0118":  {
+                  "sensor":  "ECT",
+                  "dtcCode":  "P0118",
+                  "faultDescription":  "ECT circuit high input",
+                  "possibleCauses":  [
+                                         "Open signal circuit",
+                                         "Disconnected sensor",
+                                         "Damaged wiring",
+                                         "Poor connection",
+                                         "Failed sensor"
+                                     ],
+                  "recommendedActions":  [
+                                             "Check live temperature",
+                                             "Inspect connector",
+                                             "Test circuit continuity",
+                                             "Check sensor resistance",
+                                             "Repair circuit or replace sensor if confirmed"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0105":  {
+                  "sensor":  "MAP",
+                  "dtcCode":  "P0105",
+                  "faultDescription":  "MAP circuit malfunction",
+                  "possibleCauses":  [
+                                         "Sensor failure",
+                                         "Damaged wiring",
+                                         "Poor connector",
+                                         "Missing reference voltage",
+                                         "Blocked pressure passage"
+                                     ],
+                  "recommendedActions":  [
+                                             "Scan DTCs",
+                                             "Inspect connector",
+                                             "Check reference voltage and ground",
+                                             "Inspect pressure passage or hose",
+                                             "Test sensor output and repair confirmed fault"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0107":  {
+                  "sensor":  "MAP",
+                  "dtcCode":  "P0107",
+                  "faultDescription":  "MAP circuit low input",
+                  "possibleCauses":  [
+                                         "Signal short to ground",
+                                         "Sensor failure",
+                                         "Open reference circuit",
+                                         "Damaged wiring",
+                                         "Poor connector"
+                                     ],
+                  "recommendedActions":  [
+                                             "Check live pressure data",
+                                             "Inspect connector",
+                                             "Test signal voltage",
+                                             "Check reference voltage and ground",
+                                             "Repair wiring or replace sensor if confirmed"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0124":  {
+                  "sensor":  "TPS",
+                  "dtcCode":  "P0124",
+                  "faultDescription":  "TPS intermittent signal",
+                  "possibleCauses":  [
+                                         "Loose connector",
+                                         "Damaged wire",
+                                         "Worn sensor track",
+                                         "Vibration",
+                                         "Intermittent electrical contact"
+                                     ],
+                  "recommendedActions":  [
+                                             "Inspect connector",
+                                             "Check wiring for intermittent faults",
+                                             "Monitor live data",
+                                             "Perform suitable continuity test",
+                                             "Repair connection or replace sensor if confirmed"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0122":  {
+                  "sensor":  "TPS",
+                  "dtcCode":  "P0122",
+                  "faultDescription":  "TPS circuit low input",
+                  "possibleCauses":  [
+                                         "Signal short to ground",
+                                         "Open circuit",
+                                         "Poor connection",
+                                         "Failed sensor",
+                                         "Reference-voltage issue"
+                                     ],
+                  "recommendedActions":  [
+                                             "Check DTCs",
+                                             "Inspect connector",
+                                             "Test signal wire",
+                                             "Check 5 V reference and ground",
+                                             "Repair wiring or replace sensor if confirmed"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0109":  {
+                  "sensor":  "MAP",
+                  "dtcCode":  "P0109",
+                  "faultDescription":  "MAP intermittent signal",
+                  "possibleCauses":  [
+                                         "Loose connector",
+                                         "Damaged wiring",
+                                         "Intermittent sensor fault",
+                                         "Vibration",
+                                         "Poor electrical contact"
+                                     ],
+                  "recommendedActions":  [
+                                             "Monitor MAP readings",
+                                             "Inspect connector",
+                                             "Check wiring harness",
+                                             "Test for intermittent signal loss",
+                                             "Repair connection or replace sensor if confirmed"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0130":  {
+                  "sensor":  "O2",
+                  "dtcCode":  "P0130",
+                  "faultDescription":  "O2 sensor circuit malfunction (Bank 1 Sensor 1)",
+                  "possibleCauses":  [
+                                         "Failed sensor",
+                                         "Wiring damage",
+                                         "Connector fault",
+                                         "Ground problem",
+                                         "Exhaust leak"
+                                     ],
+                  "recommendedActions":  [
+                                             "Scan DTCs",
+                                             "Inspect connector",
+                                             "Check wiring",
+                                             "Monitor O2 live data",
+                                             "Test circuit and replace sensor if confirmed faulty"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0119":  {
+                  "sensor":  "ECT",
+                  "dtcCode":  "P0119",
+                  "faultDescription":  "ECT intermittent signal",
+                  "possibleCauses":  [
+                                         "Loose connection",
+                                         "Broken wire",
+                                         "Sensor failure",
+                                         "Corrosion",
+                                         "Vibration-related fault"
+                                     ],
+                  "recommendedActions":  [
+                                             "Inspect connector",
+                                             "Check wiring harness",
+                                             "Monitor live temperature",
+                                             "Test for intermittent continuity",
+                                             "Repair wiring or replace sensor if confirmed"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0132":  {
+                  "sensor":  "O2",
+                  "dtcCode":  "P0132",
+                  "faultDescription":  "O2 sensor circuit high voltage (Bank 1 Sensor 1)",
+                  "possibleCauses":  [
+                                         "Signal short to voltage",
+                                         "Rich mixture",
+                                         "Sensor failure",
+                                         "Wiring fault",
+                                         "Fuel-system problem"
+                                     ],
+                  "recommendedActions":  [
+                                             "Read live O2 data",
+                                             "Inspect wiring",
+                                             "Check fuel trims",
+                                             "Investigate rich-running conditions",
+                                             "Test sensor and circuit before replacement"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0115":  {
+                  "sensor":  "ECT",
+                  "dtcCode":  "P0115",
+                  "faultDescription":  "ECT circuit malfunction",
+                  "possibleCauses":  [
+                                         "Sensor failure",
+                                         "Wiring fault",
+                                         "Connector corrosion",
+                                         "Poor ground",
+                                         "Reference-circuit problem"
+                                     ],
+                  "recommendedActions":  [
+                                             "Scan DTCs",
+                                             "Inspect connector",
+                                             "Check wiring",
+                                             "Measure sensor resistance against temperature specifications",
+                                             "Repair circuit or replace sensor if confirmed"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0123":  {
+                  "sensor":  "TPS",
+                  "dtcCode":  "P0123",
+                  "faultDescription":  "TPS circuit high input",
+                  "possibleCauses":  [
+                                         "Signal short to voltage",
+                                         "Faulty sensor",
+                                         "Poor ground",
+                                         "Wiring damage",
+                                         "Connector fault"
+                                     ],
+                  "recommendedActions":  [
+                                             "Read live data",
+                                             "Inspect wiring",
+                                             "Check signal voltage",
+                                             "Test ground and reference voltage",
+                                             "Repair circuit or replace sensor if needed"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0121":  {
+                  "sensor":  "TPS",
+                  "dtcCode":  "P0121",
+                  "faultDescription":  "TPS range/performance problem",
+                  "possibleCauses":  [
+                                         "Incorrect signal",
+                                         "Worn sensor track",
+                                         "Throttle problem",
+                                         "Wiring fault",
+                                         "Incorrect installation"
+                                     ],
+                  "recommendedActions":  [
+                                             "Check live TPS data",
+                                             "Compare with throttle position",
+                                             "Inspect throttle body",
+                                             "Check wiring",
+                                             "Test or replace sensor if confirmed faulty"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0134":  {
+                  "sensor":  "O2",
+                  "dtcCode":  "P0134",
+                  "faultDescription":  "O2 sensor no activity detected (Bank 1 Sensor 1)",
+                  "possibleCauses":  [
+                                         "Open circuit",
+                                         "Failed sensor",
+                                         "Disconnected connector",
+                                         "Heater issue",
+                                         "Wiring fault"
+                                     ],
+                  "recommendedActions":  [
+                                             "Check live O2 data",
+                                             "Inspect connector",
+                                             "Test signal wiring",
+                                             "Check heater circuit where applicable",
+                                             "Repair circuit or replace sensor if confirmed"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0100":  {
+                  "sensor":  "MAF",
+                  "dtcCode":  "P0100",
+                  "faultDescription":  "MAF circuit malfunction",
+                  "possibleCauses":  [
+                                         "Failed sensor",
+                                         "Wiring damage",
+                                         "Connector fault",
+                                         "Power-supply issue",
+                                         "Ground fault"
+                                     ],
+                  "recommendedActions":  [
+                                             "Scan DTCs",
+                                             "Inspect connector",
+                                             "Check power and ground",
+                                             "Test signal output",
+                                             "Repair circuit or replace sensor if confirmed"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0120":  {
+                  "sensor":  "TPS",
+                  "dtcCode":  "P0120",
+                  "faultDescription":  "TPS circuit malfunction",
+                  "possibleCauses":  [
+                                         "Sensor failure",
+                                         "Damaged wiring",
+                                         "Loose connector",
+                                         "Poor ground",
+                                         "Reference-voltage fault"
+                                     ],
+                  "recommendedActions":  [
+                                             "Scan DTCs",
+                                             "Inspect connector",
+                                             "Check wiring continuity",
+                                             "Measure reference voltage and ground",
+                                             "Test TPS output"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0116":  {
+                  "sensor":  "ECT",
+                  "dtcCode":  "P0116",
+                  "faultDescription":  "ECT range/performance problem",
+                  "possibleCauses":  [
+                                         "Incorrect temperature reading",
+                                         "Thermostat problem",
+                                         "Cooling-system issue",
+                                         "Sensor fault",
+                                         "Wiring fault"
+                                     ],
+                  "recommendedActions":  [
+                                             "Check cold-engine live data",
+                                             "Compare with ambient temperature",
+                                             "Inspect coolant level safely",
+                                             "Test thermostat operation",
+                                             "Check sensor and wiring"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0108":  {
+                  "sensor":  "MAP",
+                  "dtcCode":  "P0108",
+                  "faultDescription":  "MAP circuit high input",
+                  "possibleCauses":  [
+                                         "Signal short to voltage",
+                                         "Sensor failure",
+                                         "Ground fault",
+                                         "Damaged wiring",
+                                         "Connector issue"
+                                     ],
+                  "recommendedActions":  [
+                                             "Read live data",
+                                             "Inspect wiring",
+                                             "Measure signal voltage",
+                                             "Test ground and reference supply",
+                                             "Repair circuit or replace sensor if confirmed"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0101":  {
+                  "sensor":  "MAF",
+                  "dtcCode":  "P0101",
+                  "faultDescription":  "MAF range/performance problem",
+                  "possibleCauses":  [
+                                         "Dirty sensor",
+                                         "Intake leak",
+                                         "Blocked air filter",
+                                         "Incorrect airflow reading",
+                                         "Wiring fault"
+                                     ],
+                  "recommendedActions":  [
+                                             "Read live MAF data",
+                                             "Inspect air filter",
+                                             "Check intake hoses for leaks",
+                                             "Clean using approved MAF cleaner if appropriate",
+                                             "Recheck readings and replace sensor only if confirmed faulty"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0103":  {
+                  "sensor":  "MAF",
+                  "dtcCode":  "P0103",
+                  "faultDescription":  "MAF circuit high input",
+                  "possibleCauses":  [
+                                         "Signal short to voltage",
+                                         "Wiring fault",
+                                         "Failed sensor",
+                                         "Connector problem",
+                                         "Electrical interference"
+                                     ],
+                  "recommendedActions":  [
+                                             "Check live MAF readings",
+                                             "Inspect wiring",
+                                             "Measure signal output",
+                                             "Test power and ground circuits",
+                                             "Repair circuit or replace sensor if confirmed"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0135":  {
+                  "sensor":  "O2",
+                  "dtcCode":  "P0135",
+                  "faultDescription":  "O2 sensor heater circuit malfunction (Bank 1 Sensor 1)",
+                  "possibleCauses":  [
+                                         "Failed heater element",
+                                         "Blown fuse",
+                                         "Damaged wiring",
+                                         "Poor connector",
+                                         "Power-supply fault"
+                                     ],
+                  "recommendedActions":  [
+                                             "Scan DTCs",
+                                             "Inspect connector",
+                                             "Check relevant fuse",
+                                             "Test heater power, ground and resistance to specifications",
+                                             "Repair wiring or replace heater/sensor assembly if confirmed"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0133":  {
+                  "sensor":  "O2",
+                  "dtcCode":  "P0133",
+                  "faultDescription":  "O2 sensor slow response (Bank 1 Sensor 1)",
+                  "possibleCauses":  [
+                                         "Aging sensor",
+                                         "Contamination",
+                                         "Exhaust leak",
+                                         "Wiring problem",
+                                         "Mixture-control issue"
+                                     ],
+                  "recommendedActions":  [
+                                             "Monitor response using suitable scan tool",
+                                             "Inspect sensor wiring",
+                                             "Check for exhaust leaks",
+                                             "Investigate fuel-mixture faults",
+                                             "Replace sensor if response testing confirms failure"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0117":  {
+                  "sensor":  "ECT",
+                  "dtcCode":  "P0117",
+                  "faultDescription":  "ECT circuit low input",
+                  "possibleCauses":  [
+                                         "Signal short to ground",
+                                         "Failed sensor",
+                                         "Damaged wiring",
+                                         "Poor connector",
+                                         "Circuit fault"
+                                     ],
+                  "recommendedActions":  [
+                                             "Read live temperature",
+                                             "Inspect connector",
+                                             "Check signal wire",
+                                             "Test sensor resistance",
+                                             "Repair wiring or replace sensor if confirmed"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0102":  {
+                  "sensor":  "MAF",
+                  "dtcCode":  "P0102",
+                  "faultDescription":  "MAF circuit low input",
+                  "possibleCauses":  [
+                                         "Low signal",
+                                         "Damaged wire",
+                                         "Short to ground",
+                                         "Sensor contamination",
+                                         "Failed sensor"
+                                     ],
+                  "recommendedActions":  [
+                                             "Monitor live data",
+                                             "Inspect connector",
+                                             "Check wiring",
+                                             "Test power and ground",
+                                             "Clean or replace sensor if testing confirms the cause"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0104":  {
+                  "sensor":  "MAF",
+                  "dtcCode":  "P0104",
+                  "faultDescription":  "MAF intermittent signal",
+                  "possibleCauses":  [
+                                         "Loose connector",
+                                         "Damaged wiring",
+                                         "Sensor failure",
+                                         "Vibration",
+                                         "Poor electrical contact"
+                                     ],
+                  "recommendedActions":  [
+                                             "Monitor live data",
+                                             "Inspect connector pins",
+                                             "Check harness condition",
+                                             "Test for intermittent electrical faults",
+                                             "Repair wiring or replace sensor if confirmed"
+                                         ],
+                  "severity":  "High"
+              },
+    "P0106":  {
+                  "sensor":  "MAP",
+                  "dtcCode":  "P0106",
+                  "faultDescription":  "MAP range/performance problem",
+                  "possibleCauses":  [
+                                         "Implausible pressure reading",
+                                         "Intake leak",
+                                         "Blocked passage",
+                                         "Sensor fault",
+                                         "Wiring issue"
+                                     ],
+                  "recommendedActions":  [
+                                             "Read live MAP data",
+                                             "Compare key-on and engine-running readings",
+                                             "Inspect intake system",
+                                             "Check wiring",
+                                             "Test or replace sensor if confirmed faulty"
+                                         ],
+                  "severity":  "Medium"
+              },
+    "P0131":  {
+                  "sensor":  "O2",
+                  "dtcCode":  "P0131",
+                  "faultDescription":  "O2 sensor circuit low voltage (Bank 1 Sensor 1)",
+                  "possibleCauses":  [
+                                         "Signal short to ground",
+                                         "Sensor fault",
+                                         "Wiring damage",
+                                         "Exhaust leak",
+                                         "Mixture problem"
+                                     ],
+                  "recommendedActions":  [
+                                             "Monitor O2 signal",
+                                             "Inspect wiring",
+                                             "Check for exhaust leaks",
+                                             "Check fuel-trim data",
+                                             "Test circuit and sensor before replacement"
+                                         ],
+                  "severity":  "High"
+              }
+}
+;
+
+    function App() {
+      // Navigation states: 'auth', 'home', 'garage', 'bluetooth', 'live', 'faults', 'details', 'history', 'vehicleSelect'
+      // FIRST SCREEN DISPLAYED IS 'auth' (Registration / Login)
+      const [currentScreen, setCurrentScreen] = useState("auth");
+      const [liveViewMode, setLiveViewMode] = useState("cluster"); // 'cluster' or 'grid'
+
+      // Logged in User & Garage State (Starts as null so user must register/login first)
+      const [currentUser, setCurrentUser] = useState(null);
+
+      // Active vehicle for OBD-II scan (Set dynamically upon registration)
+      const [selectedVehicle, setSelectedVehicle] = useState({
+        brand: "SUZUKI",
+        model: "Wagon R",
+        licensePlate: "WP-NEW-0001",
+        year: 2018
+      });
+
+      // Bluetooth State
+      const [connectedDevice, setConnectedDevice] = useState({
+        name: "ELM327 (Bluetooth)",
+        address: "00:1D:A5:68:98:8B"
+      });
+      const [isConnected, setIsConnected] = useState(true);
+      const [isBluetoothScanning, setIsBluetoothScanning] = useState(false);
+      const [connectingAddress, setConnectingAddress] = useState(null);
+      const [bluetoothLogs, setBluetoothLogs] = useState([
+        "System ready. Bluetooth SPP Profile enabled.",
+        "Listening on RFCOMM UUID 00001101-0000-1000-8000-00805F9B34FB"
+      ]);
+
+      const [discoveredDevices] = useState([
+        { name: "OBDII (ELM327 v1.5)", address: "00:1D:A5:68:98:8B", type: "OBD2 SPP", rssi: -54, paired: true },
+        { name: "Car Scanner Adapter", address: "00:1B:35:12:34:56", type: "OBD2 SPP", rssi: -68, paired: true },
+        { name: "V-LINK OBD2 Bluetooth", address: "11:22:33:44:55:66", type: "BLE 5.0", rssi: -79, paired: false }
+      ]);
+
+      // Registration Form State
+      const [authMode, setAuthMode] = useState("register"); // 'register' or 'login'
+      const [regFullName, setRegFullName] = useState("");
+      const [regEmail, setRegEmail] = useState("");
+      const [regPassword, setRegPassword] = useState("");
+      const [regPhone, setRegPhone] = useState("");
+      const [regBrand, setRegBrand] = useState("TOYOTA");
+      const [regModel, setRegModel] = useState("Prius");
+      const [regPlate, setRegPlate] = useState("");
+      const [regYear, setRegYear] = useState("2019");
+      const [regFuel, setRegFuel] = useState("Petrol / Hybrid");
+      const [regMileage, setRegMileage] = useState("");
+      const [showAddCarModal, setShowAddCarModal] = useState(false);
+
+      // Diagnostic Faults
+      const [activeDTCs, setActiveDTCs] = useState(["P0101"]);
+      const [selectedFault, setSelectedFault] = useState(DTC_DATABASE["P0101"]);
+      const [isScanningVehicle, setIsScanningVehicle] = useState(false);
+
+      // History
+      const [history, setHistory] = useState([
+        {
+          id: "1",
+          date: new Date().toLocaleString(),
+          vehicle: "SUZUKI Wagon R (WP CAC-4589)",
+          codes: ["P0101"],
+          status: "Fault Detected",
+          rpm: 1402,
+          ect: 51
+        }
+      ]);
+
+      // Sensors
+      const [sensors, setSensors] = useState({
+        rpm: 1402,
+        speed: 0,
+        ect: 51,
+        iat: 35,
+        tps: 14.5,
+        maf: 2.8,
+        map: 36,
+        o2: 0.72
+      });
+
+      // Stream jitter
+      useEffect(() => {
+        if (!isConnected) return;
+        const interval = setInterval(() => {
+          setSensors(prev => ({
+            ...prev,
+            rpm: Math.round(1350 + Math.random() * 140),
+            ect: Math.min(95, prev.ect + (Math.random() > 0.8 ? 1 : 0)),
+            tps: Number((14.0 + Math.random() * 1.5).toFixed(1)),
+            maf: Number((2.7 + Math.random() * 0.3).toFixed(1)),
+            map: Math.round(35 + Math.random() * 3),
+            o2: Number((0.65 + Math.random() * 0.15).toFixed(2))
+          }));
+        }, 1100);
+        return () => clearInterval(interval);
+      }, [isConnected]);
+
+      // Bluetooth scan
+      const runBluetoothScan = () => {
+        setIsBluetoothScanning(true);
+        setBluetoothLogs(prev => [...prev, "🔍 Scanning nearby ELM327 OBD-II adapters..."]);
+        setTimeout(() => {
+          setIsBluetoothScanning(false);
+          setBluetoothLogs(prev => [...prev, `✓ Found ${discoveredDevices.length} adapters.`]);
+        }, 1600);
+      };
+
+      const connectDevice = (dev) => {
+        setConnectingAddress(dev.address);
+        setBluetoothLogs([`Connecting to ${dev.name}...`, "Opening RFCOMM SPP..."]);
+        setTimeout(() => {
+          setBluetoothLogs(prev => [...prev, "> AT Z", "< ELM327 v1.5 OK", "> AT SP 0", "< OK (CAN 11/500)", "> 0100", "< 41 00 BE 3F B8 11", "✓ Connected to Vehicle ECU!"]);
+          setIsConnected(true);
+          setConnectedDevice(dev);
+          setConnectingAddress(null);
+          setCurrentScreen("home");
+        }, 1200);
+      };
+
+      // Handle User + Vehicle Registration
+      const handleRegisterSubmit = (e) => {
+        e.preventDefault();
+        if (authMode === "register") {
+          if (!regFullName.trim() || !regEmail.trim() || !regPassword.trim()) {
+            alert("Please enter Full Name, Email and Password.");
+            return;
+          }
+          if (!regPlate.trim()) {
+            alert("Please enter vehicle license plate number.");
+            return;
+          }
+
+          const newUser = {
+            _id: "user_" + Date.now(),
+            fullName: regFullName,
+            email: regEmail,
+            phone: regPhone,
+            vehicles: [
+              {
+                _id: "veh_" + Date.now(),
+                brand: regBrand,
+                model: regModel,
+                licensePlate: regPlate.toUpperCase().trim(),
+                year: parseInt(regYear, 10) || 2019,
+                fuelType: regFuel,
+                mileage: parseInt(regMileage, 10) || 0,
+                isPrimary: true
+              }
+            ]
+          };
+          setCurrentUser(newUser);
+          setSelectedVehicle({
+            brand: regBrand,
+            model: regModel,
+            licensePlate: regPlate.toUpperCase().trim(),
+            year: parseInt(regYear, 10) || 2019
+          });
+          alert("Account and vehicle registered successfully in MongoDB!");
+          setCurrentScreen("garage");
+        } else {
+          // Login
+          if (!regEmail.trim() || !regPassword.trim()) {
+            alert("Please enter email and password.");
+            return;
+          }
+          setCurrentUser({
+            _id: "user_logged",
+            fullName: "Kasun Perera",
+            email: regEmail,
+            phone: "077 123 4567",
+            vehicles: [
+              {
+                _id: "v1",
+                brand: "SUZUKI",
+                model: "Wagon R",
+                licensePlate: "WP CAC-4589",
+                year: 2018,
+                fuelType: "Petrol / Hybrid",
+                mileage: 68500,
+                isPrimary: true
+              }
+            ]
+          });
+          setSelectedVehicle({
+            brand: "SUZUKI",
+            model: "Wagon R",
+            licensePlate: "WP CAC-4589",
+            year: 2018
+          });
+          setCurrentScreen("garage");
+        }
+      };
+
+      // Add another vehicle
+      const handleAddNewVehicle = (e) => {
+        e.preventDefault();
+        if (!regPlate.trim()) {
+          alert("Please enter license plate.");
+          return;
+        }
+        const newCar = {
+          _id: "veh_" + Date.now(),
+          brand: regBrand,
+          model: regModel,
+          licensePlate: regPlate.toUpperCase().trim(),
+          year: parseInt(regYear, 10) || 2020,
+          fuelType: regFuel,
+          mileage: parseInt(regMileage, 10) || 0,
+          isPrimary: false
+        };
+        const updated = {
+          ...currentUser,
+          vehicles: [...(currentUser?.vehicles || []), newCar]
+        };
+        setCurrentUser(updated);
+        setShowAddCarModal(false);
+        setRegPlate("");
+        alert("Vehicle added to your garage!");
+      };
+
+      // Run vehicle scan
+      const handleRunScan = () => {
+        if (!isConnected) {
+          alert("Please connect to ELM327 Bluetooth first.");
+          setCurrentScreen("bluetooth");
+          return;
+        }
+        setIsScanningVehicle(true);
+        setTimeout(() => {
+          setIsScanningVehicle(false);
+          const record = {
+            id: Date.now().toString(),
+            date: new Date().toLocaleString(),
+            vehicle: `${selectedVehicle.brand} ${selectedVehicle.model} (${selectedVehicle.licensePlate || 'N/A'})`,
+            codes: [...activeDTCs],
+            status: activeDTCs.length > 0 ? "Fault Detected" : "Normal",
+            rpm: sensors.rpm,
+            ect: sensors.ect
+          };
+          setHistory([record, ...history]);
+          setCurrentScreen("faults");
+        }, 1200);
+      };
+
+      const handleClearCodes = () => {
+        if (confirm("Send OBD Mode 04 command to clear trouble codes from ECU?")) {
+          setActiveDTCs([]);
+          alert("DTC Codes cleared successfully.");
+        }
+      };
+
+      const handleTriggerFault = (code) => {
+        if (!activeDTCs.includes(code)) {
+          setActiveDTCs([...activeDTCs, code]);
+        } else {
+          setActiveDTCs(activeDTCs.filter(c => c !== code));
+        }
+      };
+
+      // Needle Angles
+      const rpmDegrees = -120 + Math.min(7000, sensors.rpm) * (240 / 7000);
+      const ectDegrees = -110 + (Math.min(120, Math.max(-20, sensors.ect)) + 20) * (220 / 140);
+
+      // Brands and Models
+      const brands = [...new Set(VEHICLES.map(v => v.brand))];
+      const availableModels = VEHICLES.filter(v => v.brand === regBrand);
+
+      return (
+        <div className="flex flex-col h-full select-none text-slate-100">
+          
+          {/* Top Status Header */}
+          <div className="flex justify-between items-center px-5 pt-3 pb-2 text-xs text-slate-400 border-b border-slate-800/80 bg-[#070e1a]">
+            <span className="font-mono text-slate-300">10:24 PM</span>
+            <div className="flex items-center space-x-2">
+              <span className={`flex items-center text-[11px] font-semibold ${isConnected ? "text-emerald-400" : "text-rose-400"}`}>
+                <span className={`w-2 h-2 rounded-full mr-1.5 ${isConnected ? "bg-emerald-400 animate-pulse" : "bg-rose-400"}`}></span>
+                {isConnected ? "ELM327 Bluetooth" : "Disconnected"}
+              </span>
+              <span>🔋 78%</span>
+            </div>
+          </div>
+
+          {/* MAIN DYNAMIC VIEW */}
+          <div className="flex-1 overflow-y-auto custom-scroll p-4">
+
+            {/* ============================================================== */}
+            {/* 1. HOME SCREEN */}
+            {/* ============================================================== */}
+            {currentScreen === "home" && (
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="flex justify-between items-center pb-1">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-3xl">🚗</span>
+                    <div>
+                      <h1 className="text-xl font-bold tracking-tight">OBD II</h1>
+                      <p className="text-xs text-slate-400">Vehicle Health Monitor</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    {/* Bluetooth Button */}
+                    <button 
+                      onClick={() => setCurrentScreen("bluetooth")}
+                      className="p-2 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 text-sky-400 flex items-center space-x-1"
+                      title="Bluetooth Scanner"
+                    >
+                      <span>📡</span>
+                      <span className="text-xs font-bold">BT</span>
+                    </button>
+
+                    {/* Driver Garage / Registration Avatar */}
+                    <button 
+                      onClick={() => setCurrentScreen(currentUser ? "garage" : "auth")}
+                      className="p-1.5 bg-gradient-to-r from-sky-600 to-indigo-600 rounded-xl text-white flex items-center space-x-1.5 shadow"
+                      title="My Garage & Profile"
+                    >
+                      <span className="text-xs font-bold px-1">
+                        {currentUser?.fullName ? currentUser.fullName.split(' ')[0] : 'Sign In'}
+                      </span>
+                      <span className="text-sm">🚘</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Connection Status Card */}
+                <div 
+                  onClick={() => setCurrentScreen("bluetooth")}
+                  className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer border transition-all ${
+                    isConnected 
+                      ? "bg-emerald-950/40 border-emerald-500/50 hover:bg-emerald-950/60" 
+                      : "bg-rose-950/40 border-rose-500/50 hover:bg-rose-950/60"
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3.5 h-3.5 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+                    <div>
+                      <h3 className="font-semibold text-sm">
+                        {isConnected ? "Connected" : "Disconnected"}
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {isConnected ? `${connectedDevice?.name || "ELM327"} (Bluetooth SPP)` : "Tap to open Bluetooth Scanner"}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-slate-400 font-bold text-lg">›</span>
+                </div>
+
+                {/* Registered Vehicle Card (with License Plate and Specs) */}
+                <div className="bg-[#101b2d] border border-slate-800/80 rounded-2xl p-4 flex justify-between items-center shadow-lg relative overflow-hidden">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-[10px] uppercase font-bold text-sky-400 tracking-wider">
+                        {currentUser ? "Registered Vehicle" : "Selected Vehicle"}
+                      </span>
+                      {selectedVehicle.licensePlate && (
+                        <span className="bg-slate-800 border border-slate-700 text-sky-300 font-mono text-[10px] font-bold px-1.5 py-0.5 rounded">
+                          {selectedVehicle.licensePlate}
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-lg font-bold text-white mt-1">
+                      {selectedVehicle.brand} {selectedVehicle.model}
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Owner: {currentUser?.fullName || "Guest Driver"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-1">Sensors: TPS, ECT, MAF, MAP, O2</p>
+                  </div>
+                  
+                  <div className="flex flex-col items-end space-y-1.5">
+                    <button 
+                      onClick={() => setCurrentScreen("garage")}
+                      className="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold shadow"
+                    >
+                      My Garage
+                    </button>
+                    <button 
+                      onClick={() => setCurrentScreen("vehicleSelect")}
+                      className="text-[11px] text-slate-400 hover:text-slate-200"
+                    >
+                      Change Model
+                    </button>
+                  </div>
+                </div>
+
+                {/* Start Vehicle Scan Button */}
+                <button
+                  onClick={handleRunScan}
+                  disabled={isScanningVehicle}
+                  className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-[0.99]"
+                >
+                  {isScanningVehicle ? (
+                    <>
+                      <span className="animate-spin text-lg">⏳</span>
+                      <span>SCANNING ECU SENSORS & DTCS...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🔍</span>
+                      <span>START VEHICLE SCAN</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Quick Simulation Injector */}
+                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3 text-xs">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-slate-300 font-semibold flex items-center space-x-1">
+                      <span>🧪</span>
+                      <span>Fault Simulator (26 DTC Codes from Excel):</span>
+                    </span>
+                    <span className="text-[10px] text-sky-400 font-mono">Mode 03</span>
+                  </div>
+                  
+                  {/* Quick Sensor Buttons */}
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {[
+                      { code: "P0101", label: "MAF (P0101)" },
+                      { code: "P0120", label: "TPS (P0120)" },
+                      { code: "P0118", label: "ECT (P0118)" },
+                      { code: "P0107", label: "MAP (P0107)" },
+                      { code: "P0130", label: "O2 (P0130)" }
+                    ].map(item => (
+                      <button
+                        key={item.code}
+                        onClick={() => handleTriggerFault(item.code)}
+                        className={`px-2 py-1 rounded-lg border text-[10px] font-mono transition-all ${
+                          activeDTCs.includes(item.code)
+                            ? "bg-rose-600 text-white border-rose-500 font-bold shadow-md shadow-rose-900/50"
+                            : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
+                        }`}
+                      >
+                        {item.label} {activeDTCs.includes(item.code) ? "✓ Active" : "+"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* All 26 DTC Dropdown */}
+                  <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center space-x-2">
+                    <span className="text-[10px] text-slate-400">All 26 Codes:</span>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) handleTriggerFault(e.target.value);
+                      }}
+                      value=""
+                      className="flex-1 bg-[#0b1424] border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-sky-300 focus:outline-none"
+                    >
+                      <option value="">-- Choose DTC Code to Test --</option>
+                      {Object.keys(DTC_DATABASE).sort().map(c => (
+                        <option key={c} value={c}>
+                          {c} ({DTC_DATABASE[c].sensor}) - {DTC_DATABASE[c].faultDescription}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 4 Main Action Cards (Matches Slide 8) */}
+                <div className="grid grid-cols-1 gap-2.5 pt-1">
+                  {/* 1. Live Data (Blue) */}
+                  <div 
+                    onClick={() => setCurrentScreen("live")}
+                    className="bg-[#1d63d8] hover:bg-[#1853ba] p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md transition-transform active:scale-[0.98]"
+                  >
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                        📊
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-base text-white">Live Data</h3>
+                        <p className="text-xs text-blue-100">View sensor values & gauges</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl text-white font-light">›</span>
+                  </div>
+
+                  {/* 2. Faults (Red) */}
+                  <div 
+                    onClick={() => setCurrentScreen("faults")}
+                    className="bg-[#d92d20] hover:bg-[#b82418] p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md transition-transform active:scale-[0.98]"
+                  >
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                        ⚠️
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-base text-white">Faults</h3>
+                        <p className="text-xs text-red-100">
+                          {activeDTCs.length > 0 ? `${activeDTCs.length} active engine fault(s)` : "Check engine errors"}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-2xl text-white font-light">›</span>
+                  </div>
+
+                  {/* 3. History (Green) */}
+                  <div 
+                    onClick={() => setCurrentScreen("history")}
+                    className="bg-[#099250] hover:bg-[#077a43] p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md transition-transform active:scale-[0.98]"
+                  >
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                        🕒
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-base text-white">History</h3>
+                        <p className="text-xs text-emerald-100">Past fault records in MongoDB</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl text-white font-light">›</span>
+                  </div>
+
+                  {/* 4. My Garage (Indigo) */}
+                  <div 
+                    onClick={() => setCurrentScreen(currentUser ? "garage" : "auth")}
+                    className="bg-[#6366f1] hover:bg-[#4f46e5] p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md transition-transform active:scale-[0.98]"
+                  >
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                        🚘
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-base text-white">My Garage</h3>
+                        <p className="text-xs text-indigo-100">Vehicle & owner registration</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl text-white font-light">›</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* 2. REGISTRATION / SIGN IN SCREEN (First Screen on App Launch) */}
+            {/* ============================================================== */}
+            {currentScreen === "auth" && (
+              <div className="space-y-4">
+                {/* Welcome Brand Header */}
+                <div className="text-center pt-2 pb-1">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-2xl shadow-xl shadow-sky-500/20 mb-2.5">
+                    🚗
+                  </div>
+                  <h1 className="text-xl font-bold tracking-tight text-white">OBD II Vehicle Diagnostic</h1>
+                  <p className="text-xs text-sky-400 font-medium mt-0.5">Real-Time Engine Fault Detection System</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Register your account & vehicle to enter the dashboard</p>
+                </div>
+
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <span className="text-xs font-bold uppercase text-slate-400 tracking-wider">
+                    {authMode === "register" ? "New User Registration" : "Account Login"}
+                  </span>
+                  <div className="flex bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
+                    <button 
+                      onClick={() => setAuthMode("register")}
+                      className={`px-3 py-1 rounded-md font-semibold transition-all ${authMode === "register" ? "bg-sky-600 text-white shadow" : "text-slate-400"}`}
+                    >
+                      Register
+                    </button>
+                    <button 
+                      onClick={() => setAuthMode("login")}
+                      className={`px-3 py-1 rounded-md font-semibold transition-all ${authMode === "login" ? "bg-sky-600 text-white shadow" : "text-slate-400"}`}
+                    >
+                      Login
+                    </button>
+                  </div>
+                </div>
+
+                <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+                  {/* Account Info */}
+                  <div className="bg-[#101b2d] border border-slate-800 rounded-2xl p-4 space-y-3">
+                    <h3 className="text-xs font-bold uppercase text-sky-400 tracking-wider">👤 Owner / Driver Profile</h3>
+                    {authMode === "register" && (
+                      <div>
+                        <label className="text-[11px] text-slate-300 block mb-1">Full Name</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Kasun Perera" 
+                          value={regFullName} 
+                          onChange={e => setRegFullName(e.target.value)} 
+                          className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500" 
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-[11px] text-slate-300 block mb-1">Email Address</label>
+                      <input 
+                        type="email" 
+                        placeholder="driver@example.com" 
+                        value={regEmail} 
+                        onChange={e => setRegEmail(e.target.value)} 
+                        className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500" 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-slate-300 block mb-1">Password</label>
+                      <input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={regPassword} 
+                        onChange={e => setRegPassword(e.target.value)} 
+                        className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500" 
+                      />
+                    </div>
+                    {authMode === "register" && (
+                      <div>
+                        <label className="text-[11px] text-slate-300 block mb-1">Phone Number</label>
+                        <input 
+                          type="tel" 
+                          placeholder="077 123 4567" 
+                          value={regPhone} 
+                          onChange={e => setRegPhone(e.target.value)} 
+                          className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500" 
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Vehicle Info (Only during register) */}
+                  {authMode === "register" && (
+                    <div className="bg-[#101b2d] border border-slate-800 rounded-2xl p-4 space-y-3">
+                      <h3 className="text-xs font-bold uppercase text-emerald-400 tracking-wider">🚗 Vehicle Details (Excel Database)</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[11px] text-slate-300 block mb-1">Brand</label>
+                          <select 
+                            value={regBrand} 
+                            onChange={e => {
+                              setRegBrand(e.target.value);
+                              const models = VEHICLES.filter(v => v.brand === e.target.value);
+                              if (models.length > 0) setRegModel(models[0].model);
+                            }}
+                            className="w-full bg-[#071120] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                          >
+                            {brands.map(b => <option key={b} value={b}>{b}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-slate-300 block mb-1">Model</label>
+                          <select 
+                            value={regModel} 
+                            onChange={e => setRegModel(e.target.value)}
+                            className="w-full bg-[#071120] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                          >
+                            {availableModels.map(m => <option key={m.model} value={m.model}>{m.model}</option>)}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[11px] text-slate-300 block mb-1">License Plate</label>
+                          <input 
+                            type="text" 
+                            placeholder="WP CAC-4589" 
+                            value={regPlate} 
+                            onChange={e => setRegPlate(e.target.value)} 
+                            className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono focus:outline-none focus:border-sky-500" 
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-slate-300 block mb-1">Year</label>
+                          <input 
+                            type="number" 
+                            value={regYear} 
+                            onChange={e => setRegYear(e.target.value)} 
+                            className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500" 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[11px] text-slate-300 block mb-1">Fuel Type</label>
+                          <select 
+                            value={regFuel} 
+                            onChange={e => setRegFuel(e.target.value)}
+                            className="w-full bg-[#071120] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                          >
+                            <option value="Petrol / Hybrid">Petrol / Hybrid</option>
+                            <option value="Petrol">Petrol</option>
+                            <option value="Diesel">Diesel</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-slate-300 block mb-1">Mileage (km)</label>
+                          <input 
+                            type="number" 
+                            placeholder="68500" 
+                            value={regMileage} 
+                            onChange={e => setRegMileage(e.target.value)} 
+                            className="w-full bg-[#071120] border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <button 
+                    type="submit"
+                    className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.99]"
+                  >
+                    {authMode === "register" ? "✓ Register Vehicle & Enter App" : "Sign In & Enter Dashboard"}
+                  </button>
+
+                  {/* Fast Track Demo Bypass */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const demoUser = {
+                        _id: "demo_1",
+                        fullName: "Kasun Perera",
+                        email: "kasun@gmail.com",
+                        phone: "077 123 4567",
+                        vehicles: [{
+                          _id: "v1",
+                          brand: "SUZUKI",
+                          model: "Wagon R",
+                          licensePlate: "WP CAC-4589",
+                          year: 2018,
+                          fuelType: "Petrol / Hybrid",
+                          mileage: 68500,
+                          isPrimary: true
+                        }]
+                      };
+                      setCurrentUser(demoUser);
+                      setSelectedVehicle({
+                        brand: "SUZUKI",
+                        model: "Wagon R",
+                        licensePlate: "WP CAC-4589",
+                        year: 2018
+                      });
+                      setCurrentScreen("home");
+                    }}
+                    className="w-full py-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition-all"
+                  >
+                    ⚡ Skip & Enter as Demo Driver (Suzuki Wagon R) →
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* 3. MY GARAGE SCREEN */}
+            {/* ============================================================== */}
+            {currentScreen === "garage" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div className="flex items-center space-x-3">
+                    <button onClick={() => setCurrentScreen("home")} className="p-1 text-slate-300 text-lg">←</button>
+                    <h2 className="text-lg font-bold">My Garage</h2>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setCurrentUser(null);
+                      setCurrentScreen("auth");
+                    }}
+                    className="text-xs text-rose-400 bg-rose-950/40 px-2.5 py-1 rounded-lg border border-rose-800/50"
+                  >
+                    Logout
+                  </button>
+                </div>
+
+                {/* Profile Banner */}
+                <div className="bg-[#101b2d] border border-slate-800 rounded-2xl p-4 shadow flex items-center space-x-3.5">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-xl font-bold text-white shadow">
+                    {currentUser?.fullName ? currentUser.fullName.charAt(0) : "D"}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-white">{currentUser?.fullName || "Vehicle Owner"}</h3>
+                    <p className="text-xs text-slate-400">{currentUser?.email || "driver@car.lk"}</p>
+                    {currentUser?.phone && <p className="text-[11px] text-sky-400 mt-0.5">📞 {currentUser.phone}</p>}
+                  </div>
+                </div>
+
+                {/* Vehicles List */}
+                <div>
+                  <div className="flex justify-between items-center mb-2.5">
+                    <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider">
+                      Registered Vehicles ({(currentUser?.vehicles || []).length})
+                    </h3>
+                    <button 
+                      onClick={() => setShowAddCarModal(!showAddCarModal)}
+                      className="text-xs font-semibold text-sky-400 hover:text-sky-300"
+                    >
+                      {showAddCarModal ? "✕ Cancel" : "+ Add Vehicle"}
+                    </button>
+                  </div>
+
+                  {/* Add car sub-form */}
+                  {showAddCarModal && (
+                    <form onSubmit={handleAddNewVehicle} className="bg-[#0b1424] border border-sky-500/40 rounded-2xl p-4 mb-3 space-y-3 shadow-lg">
+                      <h4 className="text-xs font-bold text-sky-300">Add Another Vehicle</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] text-slate-300 block mb-1">Brand</label>
+                          <select 
+                            value={regBrand} 
+                            onChange={e => {
+                              setRegBrand(e.target.value);
+                              const models = VEHICLES.filter(v => v.brand === e.target.value);
+                              if (models.length > 0) setRegModel(models[0].model);
+                            }}
+                            className="w-full bg-[#101b2d] border border-slate-700 rounded-lg p-2 text-xs text-white"
+                          >
+                            {brands.map(b => <option key={b} value={b}>{b}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-300 block mb-1">Model</label>
+                          <select 
+                            value={regModel} 
+                            onChange={e => setRegModel(e.target.value)}
+                            className="w-full bg-[#101b2d] border border-slate-700 rounded-lg p-2 text-xs text-white"
+                          >
+                            {availableModels.map(m => <option key={m.model} value={m.model}>{m.model}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] text-slate-300 block mb-1">License Plate</label>
+                          <input 
+                            type="text" 
+                            placeholder="WP-CAB-1234" 
+                            value={regPlate} 
+                            onChange={e => setRegPlate(e.target.value)} 
+                            className="w-full bg-[#101b2d] border border-slate-700 rounded-lg p-2 text-xs text-white font-mono uppercase" 
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-300 block mb-1">Year</label>
+                          <input 
+                            type="number" 
+                            value={regYear} 
+                            onChange={e => setRegYear(e.target.value)} 
+                            className="w-full bg-[#101b2d] border border-slate-700 rounded-lg p-2 text-xs text-white" 
+                          />
+                        </div>
+                      </div>
+                      <button type="submit" className="w-full py-2 bg-sky-600 hover:bg-sky-500 font-bold text-xs text-white rounded-lg">
+                        Save Vehicle to MongoDB
+                      </button>
+                    </form>
+                  )}
+
+                  {/* Vehicle cards */}
+                  <div className="space-y-2.5">
+                    {(currentUser?.vehicles || []).map((v, i) => {
+                      const isActive = selectedVehicle.brand === v.brand && selectedVehicle.model === v.model;
+                      return (
+                        <div key={i} className={`p-4 rounded-2xl border ${isActive ? "bg-sky-950/40 border-sky-500/70" : "bg-[#101b2d] border-slate-800"}`}>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-sky-400 tracking-wider">{v.brand}</span>
+                              <h4 className="text-base font-bold text-white mt-0.5">{v.model}</h4>
+                            </div>
+                            {isActive ? (
+                              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                ✓ Active Scanner
+                              </span>
+                            ) : (
+                              <button 
+                                onClick={() => {
+                                  setSelectedVehicle({
+                                    brand: v.brand,
+                                    model: v.model,
+                                    licensePlate: v.licensePlate,
+                                    year: v.year
+                                  });
+                                  setCurrentScreen("home");
+                                }}
+                                className="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 px-2.5 py-1 rounded-lg border border-slate-700"
+                              >
+                                Select Car
+                              </button>
+                            )}
+                          </div>
+                          <div className="mt-3 pt-2.5 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-[11px] text-slate-300">
+                            <div>
+                              <span className="text-[9px] text-slate-500 block">PLATE</span>
+                              <span className="font-mono font-semibold">{v.licensePlate || "N/A"}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-500 block">YEAR</span>
+                              <span className="font-semibold">{v.year || 2018}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-500 block">MILEAGE</span>
+                              <span className="font-semibold">{v.mileage ? `${v.mileage.toLocaleString()} km` : "68,500 km"}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* 4. BLUETOOTH SCANNER SCREEN */}
+            {/* ============================================================== */}
+            {currentScreen === "bluetooth" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div className="flex items-center space-x-3">
+                    <button onClick={() => setCurrentScreen("home")} className="p-1 text-slate-300 text-lg">←</button>
+                    <h2 className="text-lg font-bold">Bluetooth OBD-II Scanner</h2>
+                  </div>
+                  <button onClick={runBluetoothScan} disabled={isBluetoothScanning} className="px-3 py-1 bg-sky-600 text-xs font-bold rounded-lg shadow">
+                    {isBluetoothScanning ? "Scanning..." : "Scan Devices"}
+                  </button>
+                </div>
+
+                {/* Radar */}
+                <div className="relative h-44 bg-[#071120] border border-slate-800 rounded-2xl flex flex-col items-center justify-center overflow-hidden">
+                  <div className="absolute w-36 h-36 border border-sky-500/20 rounded-full"></div>
+                  <div className="absolute w-24 h-24 border border-sky-500/30 rounded-full"></div>
+                  <div className="absolute w-12 h-12 border border-sky-500/40 rounded-full"></div>
+                  {isBluetoothScanning && (
+                    <div className="absolute w-36 h-36 rounded-full radar-sweep" style={{ background: "conic-gradient(from 0deg, rgba(56, 189, 248, 0.4) 0deg, transparent 60deg)" }}></div>
+                  )}
+                  {isBluetoothScanning && <div className="absolute w-28 h-28 border-2 border-sky-400 rounded-full sonar-ring"></div>}
+                  <div className="z-10 w-12 h-12 rounded-full bg-slate-900 border-2 border-sky-400 flex items-center justify-center text-xl shadow">📡</div>
+                  <p className="z-10 text-xs font-semibold text-sky-300 mt-3">
+                    {isBluetoothScanning ? "Searching for ELM327 Bluetooth adapters..." : "Bluetooth Radio Ready"}
+                  </p>
+                </div>
+
+                {/* Device cards */}
+                <div className="space-y-2">
+                  {discoveredDevices.map(dev => (
+                    <div key={dev.address} className="p-3.5 rounded-xl border bg-[#101b2d] border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-xl">🔌</div>
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <h4 className="font-bold text-sm text-white">{dev.name}</h4>
+                            {dev.paired && <span className="text-[10px] bg-sky-950 text-sky-400 px-1 rounded">Paired</span>}
+                          </div>
+                          <p className="text-[11px] font-mono text-slate-400">{dev.address}</p>
+                          <p className="text-[10px] text-emerald-400">Signal: {dev.rssi} dBm • {dev.type}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => connectDevice(dev)} disabled={Boolean(connectingAddress)} className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-xs font-bold rounded-lg shadow">
+                        {connectingAddress === dev.address ? "Pairing..." : "Connect"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Console */}
+                <div className="bg-[#030712] border border-slate-800 rounded-xl p-3 text-xs font-mono max-h-28 overflow-y-auto custom-scroll space-y-1">
+                  {bluetoothLogs.map((log, i) => (
+                    <div key={i} className={log.startsWith(">") ? "text-amber-400" : log.startsWith("<") ? "text-sky-400" : log.startsWith("✓") ? "text-emerald-400 font-bold" : "text-slate-400"}>
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* 5. LIVE DATA SCREEN */}
+            {/* ============================================================== */}
+            {currentScreen === "live" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div className="flex items-center space-x-3">
+                    <button onClick={() => setCurrentScreen("home")} className="p-1 text-slate-300 text-lg">←</button>
+                    <h2 className="text-lg font-bold">Live Data</h2>
+                  </div>
+                  <div className="flex bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
+                    <button onClick={() => setLiveViewMode("cluster")} className={`px-2.5 py-1 rounded-md font-semibold ${liveViewMode === "cluster" ? "bg-sky-600 text-white" : "text-slate-400"}`}>
+                      Gauge Dials
+                    </button>
+                    <button onClick={() => setLiveViewMode("grid")} className={`px-2.5 py-1 rounded-md font-semibold ${liveViewMode === "grid" ? "bg-sky-600 text-white" : "text-slate-400"}`}>
+                      Sensors List
+                    </button>
+                  </div>
+                </div>
+
+                {liveViewMode === "cluster" ? (
+                  <div className="space-y-3">
+                    {/* Tachometer */}
+                    <div className="bg-[#0b162c] border border-slate-800 rounded-2xl p-4 flex flex-col items-center shadow-2xl relative">
+                      <div className="w-56 h-56 relative flex items-center justify-center">
+                        <svg className="w-full h-full" viewBox="0 0 200 200">
+                          <circle cx="100" cy="100" r="85" fill="#0d1b38" stroke="#1d4ed8" strokeWidth="4" />
+                          <circle cx="100" cy="100" r="80" fill="none" stroke="#2563eb" strokeWidth="1" strokeDasharray="4 4" />
+                          <path d="M 172 135 A 85 85 0 0 0 178 85" fill="none" stroke="#dc2626" strokeWidth="12" />
+                          <text x="35" y="145" fill="#ffffff" fontSize="10" fontWeight="bold">0</text>
+                          <text x="25" y="105" fill="#ffffff" fontSize="10" fontWeight="bold">1000</text>
+                          <text x="40" y="65" fill="#ffffff" fontSize="10" fontWeight="bold">2000</text>
+                          <text x="75" y="42" fill="#ffffff" fontSize="10" fontWeight="bold">3000</text>
+                          <text x="115" y="42" fill="#ffffff" fontSize="10" fontWeight="bold">4000</text>
+                          <text x="150" y="65" fill="#ffffff" fontSize="10" fontWeight="bold">5000</text>
+                          <text x="160" y="105" fill="#ffffff" fontSize="10" fontWeight="bold">6000</text>
+                          <text x="145" y="145" fill="#ef4444" fontSize="10" fontWeight="bold">7000</text>
+                          <g style={{ transform: `rotate(${rpmDegrees}deg)`, transformOrigin: "100px 100px" }}>
+                            <line x1="100" y1="100" x2="100" y2="30" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" />
+                          </g>
+                          <circle cx="100" cy="100" r="10" fill="#64748b" stroke="#ffffff" strokeWidth="2" />
+                        </svg>
+                        <div className="absolute bottom-5 text-center">
+                          <span className="text-2xl font-mono font-bold text-white">{sensors.rpm}</span>
+                          <div className="text-[10px] font-bold uppercase text-sky-400">Engine RPM rpm</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Split Gauges */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-[#0b162c] border border-slate-800 rounded-2xl p-3 flex flex-col items-center shadow-lg relative">
+                        <div className="w-32 h-32 relative flex items-center justify-center">
+                          <svg className="w-full h-full" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="48" fill="#0d1b38" stroke="#1d4ed8" strokeWidth="3" />
+                            <path d="M 22 85 A 48 48 0 0 1 20 60" fill="none" stroke="#3b82f6" strokeWidth="6" />
+                            <path d="M 100 60 A 48 48 0 0 1 96 85" fill="none" stroke="#ef4444" strokeWidth="6" />
+                            <text x="24" y="94" fill="#60a5fa" fontSize="8" fontWeight="bold">-20</text>
+                            <text x="28" y="55" fill="#ffffff" fontSize="8" fontWeight="bold">20</text>
+                            <text x="44" y="32" fill="#ffffff" fontSize="8" fontWeight="bold">40</text>
+                            <text x="68" y="32" fill="#ffffff" fontSize="8" fontWeight="bold">60</text>
+                            <text x="85" y="55" fill="#ffffff" fontSize="8" fontWeight="bold">80</text>
+                            <text x="88" y="94" fill="#ef4444" fontSize="8" fontWeight="bold">120</text>
+                            <g style={{ transform: `rotate(${ectDegrees}deg)`, transformOrigin: "60px 60px" }}>
+                              <line x1="60" y1="60" x2="60" y2="22" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
+                            </g>
+                            <circle cx="60" cy="60" r="6" fill="#64748b" />
+                          </svg>
+                          <div className="absolute bottom-2 text-center">
+                            <span className="text-base font-mono font-bold text-white">{sensors.ect}</span>
+                            <div className="text-[9px] font-bold text-slate-300">Coolant temp. °C</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-[#0b162c] border border-slate-800 rounded-2xl p-3 flex flex-col items-center justify-center shadow-lg">
+                        <span className="text-xs uppercase font-bold text-slate-400">Speed</span>
+                        <span className="text-4xl font-mono font-bold text-white my-2">{sensors.speed}</span>
+                        <span className="text-xs text-sky-400 font-semibold">km/h</span>
+                        <div className="mt-3 text-[10px] text-slate-500 font-mono">PID 010D</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {[
+                      { name: "Engine RPM", icon: "⏱️", val: sensors.rpm, unit: "rpm", range: "(0 - 8000)" },
+                      { name: "Vehicle Speed", icon: "🚗", val: sensors.speed, unit: "km/h", range: "(0 - 250)" },
+                      { name: "Coolant Temperature (ECT)", icon: "🌡️", val: `${sensors.ect} °C`, unit: "", range: "(-40 - 120)" },
+                      { name: "Intake Air Temperature (IAT)", icon: "🌡️", val: `${sensors.iat} °C`, unit: "", range: "(-40 - 120)" },
+                      { name: "Throttle Position (TPS)", icon: "🎛️", val: `${sensors.tps} %`, unit: "", range: "(0 - 100)" },
+                      { name: "Mass Air Flow (MAF)", icon: "💨", val: `${sensors.maf} g/s`, unit: "", range: "(0 - 100)" },
+                      { name: "Manifold Absolute Pressure (MAP)", icon: "🧭", val: `${sensors.map} kPa`, unit: "", range: "(10 - 255)" },
+                      { name: "Oxygen Sensor (O2)", icon: "⚡", val: `${sensors.o2} V`, unit: "", range: "(0.1 - 0.9)" },
+                    ].map((s, idx) => (
+                      <div key={idx} className="bg-[#101b2d] border border-slate-800 p-3 rounded-xl flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-base">{s.icon}</div>
+                          <div>
+                            <div className="font-semibold text-xs text-white">{s.name}</div>
+                            <div className="text-[10px] text-slate-400">{s.range}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-bold font-mono text-sky-400">{s.val} {s.unit}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* 6. FAULTS SCREEN */}
+            {/* ============================================================== */}
+            {currentScreen === "faults" && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 pb-2 border-b border-slate-800">
+                  <button onClick={() => setCurrentScreen("home")} className="p-1 text-slate-300 text-lg">←</button>
+                  <h2 className="text-lg font-bold">Faults</h2>
+                </div>
+
+                {activeDTCs.length > 0 ? (
+                  <div className="bg-[#d92d20] rounded-2xl p-4 flex items-center space-x-3.5 text-white shadow-xl">
+                    <span className="text-3xl">⚠️</span>
+                    <div>
+                      <h3 className="font-bold text-base">Engine Fault Detected</h3>
+                      <p className="text-xs text-red-100">{activeDTCs.length} active fault(s) found</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-[#099250] rounded-2xl p-4 flex items-center space-x-3.5 text-white shadow-xl">
+                    <span className="text-3xl">✅</span>
+                    <div>
+                      <h3 className="font-bold text-base">Vehicle Condition: Normal</h3>
+                      <p className="text-xs text-emerald-100">No Known DTC Faults Detected</p>
+                    </div>
+                  </div>
+                )}
+
+                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">
+                  Diagnostic Trouble Codes (DTC)
+                </h4>
+
+                {activeDTCs.map((code) => {
+                  const fault = DTC_DATABASE[code] || {
+                    dtcCode: code,
+                    sensor: "ECU",
+                    faultDescription: `Diagnostic Trouble Code (${code})`,
+                    possibleCauses: ["Unrecognized code", "Consult workshop documentation"],
+                    recommendedActions: ["Full vehicle electronic scan"],
+                    severity: "Medium"
+                  };
+
+                  return (
+                    <div 
+                      key={code}
+                      onClick={() => {
+                        setSelectedFault(fault);
+                        setCurrentScreen("details");
+                      }}
+                      className="bg-[#101b2d] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 cursor-pointer transition-all shadow-md"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-rose-500 text-lg font-bold">!</span>
+                          <span className="font-bold text-lg text-white font-mono">{fault.dtcCode}</span>
+                        </div>
+                        <span className="bg-rose-600/30 text-rose-300 border border-rose-500/50 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                          Active
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-200 font-semibold mt-2">{fault.faultDescription}</p>
+                      {/* Possible Causes Preview */}
+                      <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300">
+                        <span className="font-bold text-rose-400 block mb-1">
+                          ⚠️ Possible Causes:
+                        </span>
+                        <ul className="list-disc list-inside space-y-0.5 text-slate-400 pl-1">
+                          {fault.possibleCauses.slice(0, 3).map((c, i) => (
+                            <li key={i}>{c}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Recommended Actions (Directly from Excel Sheet) */}
+                      <div className="mt-3 pt-2.5 border-t border-slate-800/80 bg-emerald-950/20 -mx-4 -mb-4 p-3.5 rounded-b-2xl border-t border-emerald-900/30">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
+                            <span>🛠️</span>
+                            <span>Recommended Actions (කරන්න ඕන දේවල්):</span>
+                          </span>
+                          <span className="text-[10px] text-sky-400 font-bold">Details ›</span>
+                        </div>
+                        <ul className="space-y-1 text-xs text-emerald-200/90">
+                          {fault.recommendedActions.slice(0, 3).map((a, i) => (
+                            <li key={i} className="flex items-start space-x-1.5">
+                              <span className="text-emerald-400 font-bold">✓</span>
+                              <span>{a}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {activeDTCs.length > 0 && (
+                  <button onClick={handleClearCodes} className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 font-bold text-white rounded-xl shadow-lg">
+                    Clear Fault Codes
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* 7. FAULT DETAILS SCREEN */}
+            {/* ============================================================== */}
+            {currentScreen === "details" && selectedFault && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 pb-2 border-b border-slate-800">
+                  <button onClick={() => setCurrentScreen("faults")} className="p-1 text-slate-300 text-lg">←</button>
+                  <h2 className="text-lg font-bold">Fault Details</h2>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">⚠️</span>
+                    <div>
+                      <h3 className="text-2xl font-bold font-mono text-white">{selectedFault.dtcCode}</h3>
+                      <p className="text-xs font-semibold text-sky-400 uppercase">{selectedFault.sensor} SENSOR</p>
+                    </div>
+                  </div>
+                  <span className="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full">Active</span>
+                </div>
+                <p className="text-sm font-semibold text-slate-200">{selectedFault.faultDescription}</p>
+                <div className="bg-[#101b2d] border border-slate-800 rounded-2xl p-4">
+                  <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Description</h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    The Engine Control Module (ECM) has detected that the {selectedFault.sensor} sensor signal is outside the expected operating range or performance is lower than expected.
+                  </p>
+                </div>
+                <div className="bg-[#101b2d] border border-slate-800 rounded-2xl p-4">
+                  <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Possible Causes</h4>
+                  <div className="space-y-1.5 text-xs text-slate-300">
+                    {selectedFault.possibleCauses.map((c, i) => (
+                      <div key={i} className="flex items-start space-x-2">
+                        <span className="text-rose-400 font-bold">•</span>
+                        <span>{c}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-[#101b2d] border border-slate-800 rounded-2xl p-4">
+                  <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Recommended Actions</h4>
+                  <div className="space-y-1.5 text-xs text-slate-300">
+                    {selectedFault.recommendedActions.map((a, i) => (
+                      <div key={i} className="flex items-start space-x-2">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>{a}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* 8. HISTORY SCREEN */}
+            {/* ============================================================== */}
+            {currentScreen === "history" && (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 pb-2 border-b border-slate-800">
+                  <button onClick={() => setCurrentScreen("home")} className="p-1 text-slate-300 text-lg">←</button>
+                  <h2 className="text-lg font-bold">Scan History</h2>
+                </div>
+                {history.map((h) => (
+                  <div key={h.id} className="bg-[#101b2d] border border-slate-800 rounded-xl p-3.5 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-sm text-white">{h.vehicle}</h4>
+                        <p className="text-[11px] text-slate-400">{h.date}</p>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        h.status === "Fault Detected" ? "bg-rose-600/30 text-rose-300 border-rose-500/40" : "bg-emerald-600/30 text-emerald-300 border-emerald-500/40"
+                      }`}>
+                        {h.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1.5 pt-1">
+                      <span className="text-xs text-slate-400">DTC:</span>
+                      {h.codes.map((c) => (
+                        <span key={c} className="text-xs font-mono font-bold bg-slate-800 text-rose-400 px-2 py-0.5 rounded">{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ============================================================== */}
+            {/* 9. VEHICLE SELECTION MODAL */}
+            {/* ============================================================== */}
+            {currentScreen === "vehicleSelect" && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <h2 className="text-lg font-bold">Select Database Model (28 Models)</h2>
+                  <button onClick={() => setCurrentScreen("home")} className="text-slate-400 hover:text-white font-bold p-1">✕</button>
+                </div>
+                <div className="space-y-2 max-h-[670px] overflow-y-auto custom-scroll pr-1">
+                  {VEHICLES.map((v, i) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        setSelectedVehicle({
+                          brand: v.brand,
+                          model: v.model,
+                          licensePlate: selectedVehicle.licensePlate || "WP-CAC-4589"
+                        });
+                        setCurrentScreen("home");
+                      }}
+                      className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${
+                        selectedVehicle.brand === v.brand && selectedVehicle.model === v.model
+                          ? "bg-sky-950/60 border-sky-500 text-sky-200"
+                          : "bg-[#101b2d] border-slate-800 hover:border-slate-700 text-slate-200"
+                      }`}
+                    >
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-sky-400 tracking-wider">{v.brand}</span>
+                        <div className="font-semibold text-sm">{v.model}</div>
+                      </div>
+                      <span className="text-slate-400 text-base">›</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom App Navigation Bar (Only visible after user registers/logs in) */}
+          {currentScreen !== "auth" && currentUser && (
+            <div className="grid grid-cols-5 bg-[#070e1a] border-t border-slate-800/80 py-2.5 text-center text-[10px] text-slate-400">
+              <button 
+                onClick={() => setCurrentScreen("home")}
+                className={`flex flex-col items-center ${currentScreen === "home" ? "text-sky-400 font-bold" : "hover:text-slate-200"}`}
+              >
+                <span className="text-lg">🏠</span>
+                <span>Home</span>
+              </button>
+              <button 
+                onClick={() => setCurrentScreen("live")}
+                className={`flex flex-col items-center ${currentScreen === "live" ? "text-sky-400 font-bold" : "hover:text-slate-200"}`}
+              >
+                <span className="text-lg">📈</span>
+                <span>Live Data</span>
+              </button>
+              <button 
+                onClick={() => setCurrentScreen("faults")}
+                className={`flex flex-col items-center ${currentScreen === "faults" ? "text-sky-400 font-bold" : "hover:text-slate-200"}`}
+              >
+                <span className="text-lg">⚠️</span>
+                <span>Faults</span>
+              </button>
+              <button 
+                onClick={() => setCurrentScreen("history")}
+                className={`flex flex-col items-center ${currentScreen === "history" ? "text-sky-400 font-bold" : "hover:text-slate-200"}`}
+              >
+                <span className="text-lg">🕒</span>
+                <span>History</span>
+              </button>
+              <button 
+                onClick={() => setCurrentScreen("garage")}
+                className={`flex flex-col items-center ${currentScreen === "garage" ? "text-indigo-400 font-bold" : "hover:text-slate-200"}`}
+              >
+                <span className="text-lg">🚘</span>
+                <span>Garage</span>
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
