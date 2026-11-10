@@ -201,7 +201,7 @@ export default function App() {
             {/* Header with Title and User Profile / Bluetooth Buttons */}
             <div className="flex justify-between items-center pb-1">
               <div className="flex items-center space-x-3">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-2xl text-white shadow-md shadow-blue-500/25">
+                <div className="w-11 h-11 rounded-2xl bg-sky-100 border border-sky-200/80 flex items-center justify-center text-2xl text-sky-700 shadow-2xs">
                   🚗
                 </div>
                 <div>
@@ -217,7 +217,7 @@ export default function App() {
                 <button
                   onClick={() => setCurrentScreen('bluetooth')}
                   title="Bluetooth Scanner"
-                  className="p-2 bg-white border border-slate-200 hover:border-blue-300 rounded-xl hover:bg-blue-50 text-blue-600 flex items-center space-x-1.5 shadow-xs transition-colors font-bold text-xs"
+                  className="px-2.5 py-1.5 bg-slate-100/80 hover:bg-slate-200/80 border border-slate-200 rounded-xl text-slate-700 flex items-center space-x-1.5 shadow-2xs transition-colors font-bold text-xs"
                 >
                   <span>📡</span>
                   <span>BT</span>
@@ -227,7 +227,7 @@ export default function App() {
                 <button
                   onClick={() => setCurrentScreen(currentUser ? 'garage' : 'auth')}
                   title="My Garage & Profile"
-                  className="px-2.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl text-white flex items-center space-x-1.5 shadow-sm text-xs font-bold transition-all"
+                  className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 border border-sky-200/80 rounded-xl text-sky-700 flex items-center space-x-1.5 shadow-2xs text-xs font-bold transition-all"
                 >
                   <span>🚘</span>
                   <span>{currentUser?.fullName ? currentUser.fullName.split(' ')[0] : 'Sign In'}</span>
@@ -238,10 +238,10 @@ export default function App() {
             {/* Connection Status Banner */}
             <div
               onClick={() => setCurrentScreen('bluetooth')}
-              className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer border shadow-xs transition-all ${
+              className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer border shadow-2xs transition-all ${
                 isConnected
-                  ? 'bg-emerald-50/90 border-emerald-300 hover:bg-emerald-100/90 text-emerald-950'
-                  : 'bg-rose-50/90 border-rose-300 hover:bg-rose-100/90 text-rose-950'
+                  ? 'bg-emerald-50/80 border-emerald-200 hover:bg-emerald-100/80 text-emerald-950'
+                  : 'bg-rose-50/80 border-rose-200 hover:bg-rose-100/80 text-rose-950'
               }`}
             >
               <div className="flex items-center space-x-3">
@@ -265,11 +265,11 @@ export default function App() {
             </div>
 
             {/* Selected Vehicle Card (Light with High Contrast) */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs relative overflow-hidden">
               <div className="flex justify-between items-start">
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-[10px] uppercase font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 tracking-wider">
+                    <span className="text-[10px] uppercase font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200 tracking-wider">
                       {currentUser ? 'Active Vehicle' : 'Selected Vehicle'}
                     </span>
                     {selectedVehicle.licensePlate && (
@@ -292,13 +292,13 @@ export default function App() {
                 <div className="flex flex-col items-end space-y-1.5">
                   <button
                     onClick={() => setCurrentScreen('garage')}
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-colors"
+                    className="px-3 py-1.5 bg-sky-100 hover:bg-sky-200 text-sky-800 border border-sky-200 rounded-xl text-xs font-bold shadow-2xs transition-colors"
                   >
                     My Garage
                   </button>
                   <button
                     onClick={() => setCurrentScreen('vehicleSelect')}
-                    className="text-[11px] text-blue-600 hover:text-blue-800 font-bold underline"
+                    className="text-[11px] text-sky-600 hover:text-sky-800 font-bold underline"
                   >
                     Change Model
                   </button>
@@ -310,29 +310,29 @@ export default function App() {
             <button
               onClick={handleRunScan}
               disabled={isScanningVehicle}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold rounded-2xl shadow-md shadow-blue-500/20 flex items-center justify-center space-x-2.5 transition-all active:scale-[0.99]"
+              className="w-full py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold rounded-2xl shadow-sm shadow-sky-600/15 flex items-center justify-center space-x-2.5 transition-all active:scale-[0.99]"
             >
               {isScanningVehicle ? (
                 <>
                   <span className="animate-spin text-xl">⏳</span>
-                  <span className="tracking-wide">SCANNING SENSORS & DIAGNOSTIC DTCS...</span>
+                  <span className="tracking-wide">Scanning Sensors & Diagnostic DTCs...</span>
                 </>
               ) : (
                 <>
                   <span className="text-xl">🔍</span>
-                  <span className="tracking-wide">START FULL VEHICLE SCAN</span>
+                  <span className="tracking-wide">Start Full Vehicle Scan</span>
                 </>
               )}
             </button>
 
             {/* Quick Test Injector with all 26 Excel DTC codes */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-3.5 text-xs shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-2xl p-3.5 text-xs shadow-xs">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-slate-900 font-bold flex items-center space-x-1.5">
                   <span>🧪</span>
                   <span>Fault Code Simulator (Excel 26 DTCs):</span>
                 </span>
-                <span className="text-[10px] text-blue-700 bg-blue-50 font-mono font-bold px-1.5 py-0.5 rounded border border-blue-200">Mode 03</span>
+                <span className="text-[10px] text-sky-700 bg-sky-50 font-mono font-bold px-1.5 py-0.5 rounded border border-sky-200">Mode 03</span>
               </div>
 
               {/* Quick Sensor Buttons */}
@@ -349,7 +349,7 @@ export default function App() {
                     onClick={() => handleTriggerFault(item.code)}
                     className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all ${
                       activeDTCs.includes(item.code)
-                        ? 'bg-rose-600 text-white border-rose-600 font-bold shadow-sm'
+                        ? 'bg-rose-100 text-rose-800 border-rose-300 font-bold shadow-2xs'
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 font-semibold'
                     }`}
                   >
@@ -366,7 +366,7 @@ export default function App() {
                     if (e.target.value) handleTriggerFault(e.target.value);
                   }}
                   value=""
-                  className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:bg-white focus:outline-none"
+                  className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none"
                 >
                   <option value="">-- Choose DTC Code to Test --</option>
                   {Object.keys(DTC_DATABASE).sort().map((c) => (
@@ -378,88 +378,88 @@ export default function App() {
               </div>
             </div>
 
-            {/* 4 Main Action Cards (Matches Presentation Slide 8 in High-Contrast Colors) */}
+            {/* 4 Main Action Cards (Soft Pastel Tones / La Pata with Crisp Readability) */}
             <div className="grid grid-cols-1 gap-3 pt-1">
-              {/* 1. Live Data (Blue) */}
+              {/* 1. Live Data (Soft Sky Blue) */}
               <div
                 onClick={() => setCurrentScreen('live')}
-                className="bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md shadow-blue-500/20 transition-all active:scale-[0.99] text-white"
+                className="bg-sky-50/80 hover:bg-sky-100/80 border border-sky-200/90 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-xs hover:shadow-sm transition-all active:scale-[0.99] group"
               >
                 <div className="flex items-center space-x-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white/25 flex items-center justify-center text-2xl">
+                  <div className="w-11 h-11 rounded-xl bg-white border border-sky-200 flex items-center justify-center text-2xl shadow-2xs group-hover:scale-105 transition-transform">
                     📊
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-base">
+                    <h3 className="font-bold text-base text-sky-950">
                       Live Data
                     </h3>
-                    <p className="text-xs text-blue-100 font-medium">
+                    <p className="text-xs text-sky-700/80 font-medium">
                       Real-time gauges & sensor dials
                     </p>
                   </div>
                 </div>
-                <span className="text-3xl font-light">›</span>
+                <span className="text-2xl text-sky-400 font-bold group-hover:translate-x-0.5 transition-transform">›</span>
               </div>
 
-              {/* 2. Faults (Red) */}
+              {/* 2. Faults (Soft Rose / Coral) */}
               <div
                 onClick={() => setCurrentScreen('faults')}
-                className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md shadow-rose-500/20 transition-all active:scale-[0.99] text-white"
+                className="bg-rose-50/80 hover:bg-rose-100/80 border border-rose-200/90 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-xs hover:shadow-sm transition-all active:scale-[0.99] group"
               >
                 <div className="flex items-center space-x-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white/25 flex items-center justify-center text-2xl">
+                  <div className="w-11 h-11 rounded-xl bg-white border border-rose-200 flex items-center justify-center text-2xl shadow-2xs group-hover:scale-105 transition-transform">
                     ⚠️
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-base">Faults</h3>
-                    <p className="text-xs text-rose-100 font-medium">
+                    <h3 className="font-bold text-base text-rose-950">Faults</h3>
+                    <p className="text-xs text-rose-700/80 font-medium">
                       {activeDTCs.length > 0
                         ? `${activeDTCs.length} active DTC error code(s)`
                         : 'No errors (Vehicle Normal)'}
                     </p>
                   </div>
                 </div>
-                <span className="text-3xl font-light">›</span>
+                <span className="text-2xl text-rose-400 font-bold group-hover:translate-x-0.5 transition-transform">›</span>
               </div>
 
-              {/* 3. History (Green) */}
+              {/* 3. History (Soft Mint / Emerald) */}
               <div
                 onClick={() => setCurrentScreen('history')}
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md shadow-emerald-500/20 transition-all active:scale-[0.99] text-white"
+                className="bg-emerald-50/80 hover:bg-emerald-100/80 border border-emerald-200/90 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-xs hover:shadow-sm transition-all active:scale-[0.99] group"
               >
                 <div className="flex items-center space-x-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white/25 flex items-center justify-center text-2xl">
+                  <div className="w-11 h-11 rounded-xl bg-white border border-emerald-200 flex items-center justify-center text-2xl shadow-2xs group-hover:scale-105 transition-transform">
                     🕒
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-base">History</h3>
-                    <p className="text-xs text-emerald-100 font-medium">
+                    <h3 className="font-bold text-base text-emerald-950">History</h3>
+                    <p className="text-xs text-emerald-700/80 font-medium">
                       Past diagnostic logs in MongoDB
                     </p>
                   </div>
                 </div>
-                <span className="text-3xl font-light">›</span>
+                <span className="text-2xl text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform">›</span>
               </div>
 
-              {/* 4. Garage / Register (Indigo) */}
+              {/* 4. Garage / Register (Soft Indigo / Violet) */}
               <div
                 onClick={() => setCurrentScreen(currentUser ? 'garage' : 'auth')}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-md shadow-indigo-500/20 transition-all active:scale-[0.99] text-white"
+                className="bg-indigo-50/80 hover:bg-indigo-100/80 border border-indigo-200/90 p-4 rounded-2xl flex items-center justify-between cursor-pointer shadow-xs hover:shadow-sm transition-all active:scale-[0.99] group"
               >
                 <div className="flex items-center space-x-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white/25 flex items-center justify-center text-2xl">
+                  <div className="w-11 h-11 rounded-xl bg-white border border-indigo-200 flex items-center justify-center text-2xl shadow-2xs group-hover:scale-105 transition-transform">
                     🚘
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-base">
+                    <h3 className="font-bold text-base text-indigo-950">
                       My Garage
                     </h3>
-                    <p className="text-xs text-indigo-100 font-medium">
+                    <p className="text-xs text-indigo-700/80 font-medium">
                       Manage registered vehicles & driver profile
                     </p>
                   </div>
                 </div>
-                <span className="text-3xl font-light">›</span>
+                <span className="text-2xl text-indigo-400 font-bold group-hover:translate-x-0.5 transition-transform">›</span>
               </div>
             </div>
           </div>

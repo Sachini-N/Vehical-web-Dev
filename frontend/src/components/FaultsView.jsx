@@ -20,23 +20,27 @@ export default function FaultsView({
         <h2 className="text-lg font-extrabold text-slate-900">Diagnostic Faults</h2>
       </div>
 
-      {/* Main Alert Banner */}
+      {/* Main Alert Banner (Soft Pastel / La Pata) */}
       {activeDTCs.length > 0 ? (
-        <div className="bg-gradient-to-r from-rose-600 to-red-600 rounded-2xl p-4 flex items-center space-x-3.5 text-white shadow-md shadow-rose-500/20">
-          <span className="text-3xl">⚠️</span>
+        <div className="bg-rose-50/90 border border-rose-200/90 rounded-2xl p-4 flex items-center space-x-3.5 text-rose-950 shadow-xs">
+          <div className="w-11 h-11 rounded-xl bg-white border border-rose-200 flex items-center justify-center text-2xl shadow-2xs">
+            ⚠️
+          </div>
           <div>
-            <h3 className="font-extrabold text-base">Engine Fault Detected</h3>
-            <p className="text-xs text-rose-100 font-medium">
+            <h3 className="font-bold text-base text-rose-950">Engine Fault Detected</h3>
+            <p className="text-xs text-rose-700/80 font-medium">
               {activeDTCs.length} active fault code(s) recorded in ECU
             </p>
           </div>
         </div>
       ) : (
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-4 flex items-center space-x-3.5 text-white shadow-md shadow-emerald-500/20">
-          <span className="text-3xl">✅</span>
+        <div className="bg-emerald-50/90 border border-emerald-200/90 rounded-2xl p-4 flex items-center space-x-3.5 text-emerald-950 shadow-xs">
+          <div className="w-11 h-11 rounded-xl bg-white border border-emerald-200 flex items-center justify-center text-2xl shadow-2xs">
+            ✅
+          </div>
           <div>
-            <h3 className="font-extrabold text-base">Vehicle Status: Normal</h3>
-            <p className="text-xs text-emerald-100 font-medium">
+            <h3 className="font-bold text-base text-emerald-950">Vehicle Status: Normal</h3>
+            <p className="text-xs text-emerald-700/80 font-medium">
               No DTC error codes detected in engine ECU
             </p>
           </div>
