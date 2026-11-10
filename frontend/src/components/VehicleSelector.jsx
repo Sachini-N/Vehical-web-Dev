@@ -46,7 +46,7 @@ export default function VehicleSelector({
           placeholder="Search brand or model (e.g. Wagon R, Prius...)"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white border border-slate-200 focus:border-blue-500 text-slate-900 rounded-xl px-3.5 py-2.5 text-xs font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full bg-white border border-slate-200 focus:border-sky-500 text-slate-900 rounded-xl px-3.5 py-2.5 text-xs font-medium shadow-2xs focus:outline-none focus:ring-1 focus:ring-sky-500"
         />
       </div>
 
@@ -58,7 +58,7 @@ export default function VehicleSelector({
             onClick={() => setSelectedBrand(b)}
             className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
               selectedBrand === b
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-sky-600 text-white shadow-2xs'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -87,8 +87,8 @@ export default function VehicleSelector({
               }}
               className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between transition-all ${
                 isSelected
-                  ? 'bg-blue-50/80 border-blue-400 text-blue-950 font-bold'
-                  : 'bg-white border-slate-200 hover:border-blue-300 text-slate-800'
+                  ? 'bg-sky-50/90 border-sky-400 text-sky-950 font-bold'
+                  : 'bg-white border-slate-200 hover:border-sky-300 text-slate-800'
               }`}
             >
               <div>
@@ -100,7 +100,7 @@ export default function VehicleSelector({
                 </div>
               </div>
               {isSelected ? (
-                <span className="text-blue-600 font-extrabold text-xs">✓ Active</span>
+                <span className="text-sky-700 font-extrabold text-xs">✓ Active</span>
               ) : (
                 <span className="text-slate-300 text-lg">›</span>
               )}

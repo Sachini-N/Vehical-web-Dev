@@ -17,10 +17,10 @@ export default function SensorGrid({ sensors }) {
       {sensorItems.map((s, idx) => (
         <div
           key={idx}
-          className="bg-white border border-slate-200/90 hover:border-blue-300 p-3.5 rounded-2xl flex items-center justify-between shadow-xs transition-colors"
+          className="bg-white border border-slate-200/90 hover:border-sky-300 p-3.5 rounded-2xl flex items-center justify-between shadow-2xs transition-colors"
         >
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-lg">
+            <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-lg">
               {s.icon}
             </div>
             <div>
@@ -29,7 +29,7 @@ export default function SensorGrid({ sensors }) {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-base font-extrabold font-mono text-blue-600">
+            <div className="text-base font-extrabold font-mono text-sky-700">
               {s.val} {s.unit}
             </div>
             <div className="text-[9px] font-mono text-slate-400 font-semibold">PID {s.pid}</div>

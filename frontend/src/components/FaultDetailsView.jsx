@@ -26,7 +26,7 @@ export default function FaultDetailsView({ fault, onBack }) {
             <h3 className="text-2xl font-extrabold font-mono text-slate-900">
               {fault.dtcCode}
             </h3>
-            <p className="text-xs font-bold text-blue-600 uppercase">
+            <p className="text-xs font-bold text-sky-700 uppercase">
               {fault.sensor} SENSOR FAULT
             </p>
           </div>
@@ -36,8 +36,8 @@ export default function FaultDetailsView({ fault, onBack }) {
         </span>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3.5">
-        <p className="text-sm font-bold text-blue-950">
+      <div className="bg-sky-50 border border-sky-200 rounded-2xl p-3.5">
+        <p className="text-sm font-bold text-sky-950">
           {fault.faultDescription}
         </p>
       </div>
