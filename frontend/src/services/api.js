@@ -75,6 +75,29 @@ export const saveScanRecord = async (scanData) => {
   }
 };
 
+export const fetchScanHistoryAPI = async () => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/scans`);
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+      return data.data.map((item) => ({
+        id: item._id || item.id || Date.now().toString(),
+        date: item.scanDate ? new Date(item.scanDate).toLocaleString() : (item.date || new Date().toLocaleString()),
+        vehicle: typeof item.vehicle === 'object'
+          ? `${item.vehicle.brand} ${item.vehicle.model} (${item.vehicle.licensePlate || 'N/A'})`
+          : (item.vehicle || 'Vehicle'),
+        codes: item.detectedDTCs || item.codes || [],
+        status: (item.condition === 'NORMAL' || item.status === 'Normal') ? 'Normal' : 'Fault Detected',
+        rpm: item.sensorReadings?.rpm || item.rpm || 1400,
+        ect: item.sensorReadings?.ect || item.ect || 50,
+      }));
+    }
+  } catch (e) {
+    console.log('[API] Using local scan history fallback');
+  }
+  return null;
+};
+
 export const registerUserAPI = async (payload) => {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/register`, {

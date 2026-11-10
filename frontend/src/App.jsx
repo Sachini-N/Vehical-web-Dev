@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { VEHICLES } from './data/vehicleData';
 import { DTC_DATABASE } from './data/dtcData';
-import { matchFaultsAPI, saveScanRecord } from './services/api';
+import { matchFaultsAPI, saveScanRecord, fetchScanHistoryAPI } from './services/api';
 
 import BluetoothScanner from './components/BluetoothScanner';
 import GaugeCluster from './components/GaugeCluster';
@@ -100,6 +100,17 @@ export default function App() {
     }, 1100);
     return () => clearInterval(interval);
   }, [isConnected]);
+
+  // Load past scan history from Backend API on startup
+  useEffect(() => {
+    async function loadHistory() {
+      const remoteHistory = await fetchScanHistoryAPI();
+      if (remoteHistory && remoteHistory.length > 0) {
+        setHistory(remoteHistory);
+      }
+    }
+    loadHistory();
+  }, []);
 
   // Handle successful login or registration
   const handleAuthSuccess = (userData) => {
