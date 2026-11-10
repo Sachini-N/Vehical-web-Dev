@@ -45,7 +45,7 @@ app.use('/scans', scanRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/ai', aiRoutes);
 
-const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5001;
+const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 7000;
 
 function startServer(port, maxAttempts = 5) {
   let attempts = 0;

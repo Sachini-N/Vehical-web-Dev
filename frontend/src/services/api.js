@@ -4,15 +4,10 @@ import { DTC_DATABASE } from '../data/dtcData';
 const getApiBaseUrl = () => {
   if (import.meta.env?.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
   if (typeof window !== 'undefined') {
-    // When deployed (Vercel, Netlify) or on Vite dev server (port 3000)
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      return '/api';
-    }
-    if (window.location.port === '3000') {
-      return '/api';
-    }
+    // When deployed on Vercel or running via Vite dev server proxy
+    return '/api';
   }
-  return 'http://localhost:5001/api';
+  return 'http://localhost:7000/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();

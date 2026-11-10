@@ -1,8 +1,9 @@
 @echo off
-title OBD-II Backend API Server
+title OBD-II Backend API Server (Port 7000)
 color 0a
 echo ================================================================
 echo   🚗 STARTING OBD-II VEHICLE FAULT DETECTION BACKEND API
+echo   Port: http://localhost:7000 (Conflict-free from Event Hub)
 echo ================================================================
 echo.
 
