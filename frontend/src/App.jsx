@@ -18,80 +18,61 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [liveViewMode, setLiveViewMode] = useState('cluster'); // 'cluster' or 'grid'
 
-  // Default registered user profile
-  const [currentUser, setCurrentUser] = useState({
-    _id: 'user_default_1',
-    fullName: 'Kasun Perera',
-    email: 'kasun@example.com',
-    phone: '0771234567',
-    vehicles: [
-      {
-        _id: 'veh_default_1',
-        brand: 'SUZUKI',
-        model: 'Wagon R',
-        licensePlate: 'WP CAC-4589',
-        year: 2018,
-        fuelType: 'Petrol / Hybrid',
-        mileage: 68500,
-        engineCapacity: '660cc',
-        isPrimary: true,
-      },
-    ],
-  });
+  // Registered user profile (starts null until driver signs in or registers)
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // Active Diagnostic Vehicle (matches primary vehicle)
+  // Active Diagnostic Vehicle (clean state without fake demo plates)
   const [selectedVehicle, setSelectedVehicle] = useState({
     brand: 'SUZUKI',
     model: 'Wagon R',
-    licensePlate: 'WP CAC-4589',
-    year: 2018,
+    licensePlate: '',
+    year: 2020,
   });
 
-  // Bluetooth Connection State
-  const [connectedDevice, setConnectedDevice] = useState({
-    name: 'ELM327 (Bluetooth)',
-    address: '00:1D:A5:68:98:8B',
-  });
-  const [isConnected, setIsConnected] = useState(true);
+  // Bluetooth Connection State (disconnected until user connects an adapter)
+  const [connectedDevice, setConnectedDevice] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // Active DTC Faults
-  const [activeDTCs, setActiveDTCs] = useState(['P0101']);
-  const [selectedFault, setSelectedFault] = useState(DTC_DATABASE['P0101']);
+  // Active DTC Faults (starts clean with 0 faults)
+  const [activeDTCs, setActiveDTCs] = useState([]);
+  const [selectedFault, setSelectedFault] = useState(null);
   const [isScanningVehicle, setIsScanningVehicle] = useState(false);
 
-  // History State
-  const [history, setHistory] = useState([
-    {
-      id: '1',
-      date: new Date().toLocaleString(),
-      vehicle: 'SUZUKI Wagon R (WP CAC-4589)',
-      codes: ['P0101'],
-      status: 'Fault Detected',
-      rpm: 1402,
-      ect: 51,
-    },
-  ]);
+  // History State (starts empty until scans are performed)
+  const [history, setHistory] = useState([]);
 
-  // Live Sensor Stream
+  // Live Sensor Stream (0 / idle until connected to OBD-II)
   const [sensors, setSensors] = useState({
-    rpm: 1402,
+    rpm: 0,
     speed: 0,
-    ect: 51,
-    iat: 35,
-    tps: 14.5,
-    maf: 2.8,
-    map: 36,
-    o2: 0.72,
+    ect: 0,
+    iat: 0,
+    tps: 0,
+    maf: 0,
+    map: 0,
+    o2: 0,
   });
 
-  // Jitter sensor simulation
+  // Sensor stream simulation (only streams when connected to adapter)
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected) {
+      setSensors({
+        rpm: 0,
+        speed: 0,
+        ect: 0,
+        iat: 0,
+        tps: 0,
+        maf: 0,
+        map: 0,
+        o2: 0,
+      });
+      return;
+    }
     const interval = setInterval(() => {
       setSensors((prev) => ({
         ...prev,
         rpm: Math.round(1350 + Math.random() * 140),
-        ect: Math.min(95, prev.ect + (Math.random() > 0.8 ? 1 : 0)),
+        ect: Math.min(95, (prev.ect || 50) + (Math.random() > 0.8 ? 1 : 0)),
         tps: Number((14.0 + Math.random() * 1.5).toFixed(1)),
         maf: Number((2.7 + Math.random() * 0.3).toFixed(1)),
         map: Math.round(35 + Math.random() * 3),

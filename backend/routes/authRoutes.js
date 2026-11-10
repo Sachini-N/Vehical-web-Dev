@@ -6,28 +6,7 @@ const User = require('../models/User');
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // In-memory fallback if MongoDB connection is offline
-let localUsers = [
-  {
-    _id: 'user_default_1',
-    fullName: 'Kasun Perera',
-    email: 'kasun@example.com',
-    password: 'password123',
-    phone: '0771234567',
-    vehicles: [
-      {
-        _id: 'veh_default_1',
-        brand: 'SUZUKI',
-        model: 'Wagon R',
-        licensePlate: 'WP CAC-4589',
-        year: 2018,
-        fuelType: 'Petrol / Hybrid',
-        mileage: 68500,
-        engineCapacity: '660cc',
-        isPrimary: true,
-      },
-    ],
-  },
-];
+let localUsers = [];
 
 // POST /api/auth/register - Register new user along with their vehicle
 router.post('/register', async (req, res) => {

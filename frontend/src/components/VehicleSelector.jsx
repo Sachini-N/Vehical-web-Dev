@@ -80,8 +80,8 @@ export default function VehicleSelector({
                 onSelectVehicle({
                   brand: v.brand,
                   model: v.model,
-                  licensePlate: selectedVehicle.licensePlate || 'WP CAC-4589',
-                  year: selectedVehicle.year || 2018,
+                  licensePlate: selectedVehicle.licensePlate || '',
+                  year: selectedVehicle.year || 2020,
                 });
                 onClose();
               }}

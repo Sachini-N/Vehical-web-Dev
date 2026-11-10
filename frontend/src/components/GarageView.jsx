@@ -57,18 +57,7 @@ export default function GarageView({
     }
   };
 
-  const vehicles = user?.vehicles || [
-    {
-      _id: 'v1',
-      brand: activeVehicle.brand,
-      model: activeVehicle.model,
-      licensePlate: activeVehicle.licensePlate || 'WP CAC-4589',
-      year: activeVehicle.year || 2018,
-      fuelType: 'Petrol / Hybrid',
-      mileage: 68500,
-      isPrimary: true,
-    },
-  ];
+  const vehicles = user?.vehicles && user.vehicles.length > 0 ? user.vehicles : [];
 
   return (
     <div className="space-y-4">
@@ -83,27 +72,33 @@ export default function GarageView({
           </button>
           <h2 className="text-lg font-extrabold text-slate-900">My Garage</h2>
         </div>
-        <button
-          onClick={onLogout}
-          className="text-xs text-rose-600 hover:text-rose-800 font-bold"
-        >
-          Logout
-        </button>
+        {user && (
+          <button
+            onClick={onLogout}
+            className="text-xs text-rose-600 hover:text-rose-800 font-bold"
+          >
+            Logout
+          </button>
+        )}
       </div>
 
       {/* Driver Card */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-2xl">
             👤
           </div>
           <div>
-            <h3 className="font-extrabold text-base text-slate-900">{user?.fullName || 'Registered Driver'}</h3>
-            <p className="text-xs text-slate-500 font-medium">{user?.email || 'driver@example.com'}</p>
+            <h3 className="font-extrabold text-base text-slate-900">{user?.fullName || 'Guest Driver'}</h3>
+            <p className="text-xs text-slate-500 font-medium">{user?.email || 'Not signed in'}</p>
           </div>
         </div>
-        <span className="text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full">
-          Active Account
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+          user
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+            : 'bg-slate-100 text-slate-600 border-slate-200'
+        }`}>
+          {user ? 'Active Account' : 'Guest'}
         </span>
       </div>
 
@@ -191,51 +186,59 @@ export default function GarageView({
           </form>
         )}
 
-        {vehicles.map((v, i) => {
-          const isSelected = activeVehicle.brand === v.brand && activeVehicle.model === v.model;
+        {vehicles.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-500 shadow-2xs">
+            <span className="text-4xl block mb-2">🚗</span>
+            <h4 className="text-sm font-bold text-slate-900">No Vehicles in Garage</h4>
+            <p className="text-xs text-slate-500 mt-1">Tap '+ Add New Vehicle' above to register your first vehicle.</p>
+          </div>
+        ) : (
+          vehicles.map((v, i) => {
+            const isSelected = activeVehicle.brand === v.brand && activeVehicle.model === v.model;
 
-          return (
-            <div
-              key={i}
-              className={`bg-white border rounded-2xl p-4 shadow-sm transition-all ${
-                isSelected
-                  ? 'border-blue-400 ring-2 ring-blue-100'
-                  : 'border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-extrabold text-base text-slate-900">
-                      {v.brand} {v.model}
-                    </span>
-                    {v.licensePlate && (
-                      <span className="bg-amber-50 border border-amber-300 text-amber-900 font-mono text-[10px] font-bold px-2 py-0.5 rounded">
-                        {v.licensePlate}
+            return (
+              <div
+                key={i}
+                className={`bg-white border rounded-2xl p-4 shadow-sm transition-all ${
+                  isSelected
+                    ? 'border-sky-400 ring-2 ring-sky-100'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-extrabold text-base text-slate-900">
+                        {v.brand} {v.model}
                       </span>
-                    )}
+                      {v.licensePlate && (
+                        <span className="bg-amber-50 border border-amber-300 text-amber-900 font-mono text-[10px] font-bold px-2 py-0.5 rounded">
+                          {v.licensePlate}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium mt-1">
+                      {v.year ? `${v.year} • ` : ''}{v.fuelType || 'Petrol / Hybrid'}{v.mileage ? ` • ${v.mileage} km` : ''}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-500 font-medium mt-1">
-                    {v.year} • {v.fuelType || 'Petrol / Hybrid'} • {v.mileage || '68,500'} km
-                  </p>
-                </div>
 
-                {isSelected ? (
-                  <span className="bg-blue-600 text-white font-bold text-xs px-2.5 py-1 rounded-full shadow-xs">
-                    ✓ Active
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => onSelectActiveVehicle(v)}
-                    className="px-3 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold text-xs rounded-xl border border-slate-200"
-                  >
-                    Select
-                  </button>
-                )}
+                  {isSelected ? (
+                    <span className="bg-sky-600 text-white font-bold text-xs px-2.5 py-1 rounded-full shadow-2xs">
+                      ✓ Active
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => onSelectActiveVehicle(v)}
+                      className="px-3 py-1 bg-slate-100 hover:bg-sky-50 text-slate-700 hover:text-sky-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors"
+                    >
+                      Select
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );

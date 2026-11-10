@@ -14,10 +14,10 @@ export default function AuthView({ onAuthSuccess, onBack }) {
   // Vehicle form state (for registration)
   const [vehicleBrand, setVehicleBrand] = useState('SUZUKI');
   const [vehicleModel, setVehicleModel] = useState('Wagon R');
-  const [licensePlate, setLicensePlate] = useState('WP CAC-4589');
-  const [year, setYear] = useState('2018');
+  const [licensePlate, setLicensePlate] = useState('');
+  const [year, setYear] = useState('');
   const [fuelType, setFuelType] = useState('Petrol / Hybrid');
-  const [mileage, setMileage] = useState('68500');
+  const [mileage, setMileage] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');

@@ -143,26 +143,18 @@ export const loginUserAPI = async (credentials) => {
     });
     return await res.json();
   } catch (e) {
+    const userEmail = credentials.email || 'driver@example.com';
+    const emailPrefix = userEmail.split('@')[0];
+    const name = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
     return {
       success: true,
       message: 'Logged in (Offline Mode)',
       user: {
-        _id: 'user_offline',
-        fullName: 'Registered Driver',
-        email: credentials.email,
-        phone: '0771234567',
-        vehicles: [
-          {
-            _id: 'veh_off',
-            brand: 'SUZUKI',
-            model: 'Wagon R',
-            licensePlate: 'WP CAC-4589',
-            year: 2018,
-            fuelType: 'Petrol / Hybrid',
-            mileage: 68500,
-            isPrimary: true,
-          },
-        ],
+        _id: 'user_offline_' + Date.now(),
+        fullName: name,
+        email: userEmail,
+        phone: '',
+        vehicles: [],
       },
     };
   }

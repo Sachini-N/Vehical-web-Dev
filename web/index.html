@@ -619,40 +619,20 @@
       const [currentScreen, setCurrentScreen] = useState("home");
       const [liveViewMode, setLiveViewMode] = useState("cluster"); // 'cluster' or 'grid'
 
-      // Default active driver profile
-      const [currentUser, setCurrentUser] = useState({
-        _id: "user_default_1",
-        fullName: "Kasun Perera",
-        email: "kasun@example.com",
-        phone: "077 123 4567",
-        vehicles: [
-          {
-            _id: "veh_1",
-            brand: "SUZUKI",
-            model: "Wagon R",
-            licensePlate: "WP CAC-4589",
-            year: 2018,
-            fuelType: "Petrol / Hybrid",
-            mileage: 68500,
-            isPrimary: true
-          }
-        ]
-      });
+      // Driver profile (starts null until driver signs in or registers)
+      const [currentUser, setCurrentUser] = useState(null);
 
-      // Active vehicle for OBD-II scan
+      // Active vehicle for OBD-II scan (clean state)
       const [selectedVehicle, setSelectedVehicle] = useState({
         brand: "SUZUKI",
         model: "Wagon R",
-        licensePlate: "WP CAC-4589",
-        year: 2018
+        licensePlate: "",
+        year: 2020
       });
 
-      // Bluetooth State
-      const [connectedDevice, setConnectedDevice] = useState({
-        name: "ELM327 (Bluetooth)",
-        address: "00:1D:A5:68:98:8B"
-      });
-      const [isConnected, setIsConnected] = useState(true);
+      // Bluetooth State (disconnected until user pairs adapter)
+      const [connectedDevice, setConnectedDevice] = useState(null);
+      const [isConnected, setIsConnected] = useState(false);
       const [isBluetoothScanning, setIsBluetoothScanning] = useState(false);
       const [connectingAddress, setConnectingAddress] = useState(null);
       const [bluetoothLogs, setBluetoothLogs] = useState([
@@ -660,11 +640,7 @@
         "Listening on RFCOMM UUID 00001101-0000-1000-8000-00805F9B34FB"
       ]);
 
-      const [discoveredDevices] = useState([
-        { name: "OBDII (ELM327 v1.5)", address: "00:1D:A5:68:98:8B", type: "OBD2 SPP", rssi: -54, paired: true },
-        { name: "Car Scanner Adapter", address: "00:1B:35:12:34:56", type: "OBD2 SPP", rssi: -68, paired: true },
-        { name: "V-LINK OBD2 Bluetooth", address: "11:22:33:44:55:66", type: "BLE 5.0", rssi: -79, paired: false }
-      ]);
+      const [discoveredDevices, setDiscoveredDevices] = useState([]);
 
       // Registration Form State
       const [authMode, setAuthMode] = useState("register"); // 'register' or 'login'
@@ -675,44 +651,46 @@
       const [regBrand, setRegBrand] = useState("TOYOTA");
       const [regModel, setRegModel] = useState("Prius");
       const [regPlate, setRegPlate] = useState("");
-      const [regYear, setRegYear] = useState("2019");
+      const [regYear, setRegYear] = useState("");
       const [regFuel, setRegFuel] = useState("Petrol / Hybrid");
       const [regMileage, setRegMileage] = useState("");
       const [showAddCarModal, setShowAddCarModal] = useState(false);
 
-      // Diagnostic Faults
-      const [activeDTCs, setActiveDTCs] = useState(["P0101"]);
-      const [selectedFault, setSelectedFault] = useState(DTC_DATABASE["P0101"]);
+      // Diagnostic Faults (clean state: 0 active faults)
+      const [activeDTCs, setActiveDTCs] = useState([]);
+      const [selectedFault, setSelectedFault] = useState(null);
       const [isScanningVehicle, setIsScanningVehicle] = useState(false);
 
-      // History
-      const [history, setHistory] = useState([
-        {
-          id: "1",
-          date: new Date().toLocaleString(),
-          vehicle: "SUZUKI Wagon R (WP CAC-4589)",
-          codes: ["P0101"],
-          status: "Fault Detected",
-          rpm: 1402,
-          ect: 51
-        }
-      ]);
+      // History (empty until scans are performed)
+      const [history, setHistory] = useState([]);
 
-      // Sensors
+      // Sensors (0 / idle until connected)
       const [sensors, setSensors] = useState({
-        rpm: 1402,
+        rpm: 0,
         speed: 0,
-        ect: 51,
-        iat: 35,
-        tps: 14.5,
-        maf: 2.8,
-        map: 36,
-        o2: 0.72
+        ect: 0,
+        iat: 0,
+        tps: 0,
+        maf: 0,
+        map: 0,
+        o2: 0
       });
 
-      // Stream jitter
+      // Stream jitter (only active when connected)
       useEffect(() => {
-        if (!isConnected) return;
+        if (!isConnected) {
+          setSensors({
+            rpm: 0,
+            speed: 0,
+            ect: 0,
+            iat: 0,
+            tps: 0,
+            maf: 0,
+            map: 0,
+            o2: 0
+          });
+          return;
+        }
         const interval = setInterval(() => {
           setSensors(prev => ({
             ...prev,
@@ -795,29 +773,14 @@
             alert("Please enter email and password.");
             return;
           }
+          const emailPrefix = regEmail.split('@')[0] || "Driver";
+          const formattedName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
           setCurrentUser({
-            _id: "user_logged",
-            fullName: "Kasun Perera",
+            _id: "user_" + Date.now(),
+            fullName: formattedName,
             email: regEmail,
-            phone: "077 123 4567",
-            vehicles: [
-              {
-                _id: "v1",
-                brand: "SUZUKI",
-                model: "Wagon R",
-                licensePlate: "WP CAC-4589",
-                year: 2018,
-                fuelType: "Petrol / Hybrid",
-                mileage: 68500,
-                isPrimary: true
-              }
-            ]
-          });
-          setSelectedVehicle({
-            brand: "SUZUKI",
-            model: "Wagon R",
-            licensePlate: "WP CAC-4589",
-            year: 2018
+            phone: "",
+            vehicles: []
           });
           setCurrentScreen("garage");
         }
@@ -1334,43 +1297,9 @@
 
                   <button 
                     type="submit"
-                    className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.99]"
+                    className="w-full py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-2xl shadow-sm transition-all active:scale-[0.99]"
                   >
                     {authMode === "register" ? "✓ Register Vehicle & Enter App" : "Sign In & Enter Dashboard"}
-                  </button>
-
-                  {/* Fast Track Demo Bypass */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const demoUser = {
-                        _id: "demo_1",
-                        fullName: "Kasun Perera",
-                        email: "kasun@gmail.com",
-                        phone: "077 123 4567",
-                        vehicles: [{
-                          _id: "v1",
-                          brand: "SUZUKI",
-                          model: "Wagon R",
-                          licensePlate: "WP CAC-4589",
-                          year: 2018,
-                          fuelType: "Petrol / Hybrid",
-                          mileage: 68500,
-                          isPrimary: true
-                        }]
-                      };
-                      setCurrentUser(demoUser);
-                      setSelectedVehicle({
-                        brand: "SUZUKI",
-                        model: "Wagon R",
-                        licensePlate: "WP CAC-4589",
-                        year: 2018
-                      });
-                      setCurrentScreen("home");
-                    }}
-                    className="w-full py-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition-all"
-                  >
-                    ⚡ Skip & Enter as Demo Driver (Suzuki Wagon R) →
                   </button>
                 </form>
               </div>
@@ -1917,7 +1846,7 @@
                         setSelectedVehicle({
                           brand: v.brand,
                           model: v.model,
-                          licensePlate: selectedVehicle.licensePlate || "WP-CAC-4589"
+                          licensePlate: selectedVehicle.licensePlate || ""
                         });
                         setCurrentScreen("home");
                       }}
