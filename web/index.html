@@ -844,14 +844,6 @@
         }
       };
 
-      const handleTriggerFault = (code) => {
-        if (!activeDTCs.includes(code)) {
-          setActiveDTCs([...activeDTCs, code]);
-        } else {
-          setActiveDTCs(activeDTCs.filter(c => c !== code));
-        }
-      };
-
       // Needle Angles
       const rpmDegrees = -120 + Math.min(7000, sensors.rpm) * (240 / 7000);
       const ectDegrees = -110 + (Math.min(120, Math.max(-20, sensors.ect)) + 20) * (220 / 140);
@@ -999,59 +991,6 @@
                     </>
                   )}
                 </button>
-
-                {/* Quick Simulation Injector */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-3.5 text-xs shadow-xs">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-slate-900 font-bold flex items-center space-x-1.5">
-                      <span>🧪</span>
-                      <span>Fault Code Simulator (Excel 26 DTCs):</span>
-                    </span>
-                    <span className="text-[10px] text-sky-700 bg-sky-50 font-mono font-bold px-1.5 py-0.5 rounded border border-sky-200">Mode 03</span>
-                  </div>
-                  
-                  {/* Quick Sensor Buttons */}
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {[
-                      { code: "P0101", label: "MAF (P0101)" },
-                      { code: "P0120", label: "TPS (P0120)" },
-                      { code: "P0118", label: "ECT (P0118)" },
-                      { code: "P0107", label: "MAP (P0107)" },
-                      { code: "P0130", label: "O2 (P0130)" }
-                    ].map(item => (
-                      <button
-                        key={item.code}
-                        onClick={() => handleTriggerFault(item.code)}
-                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all ${
-                          activeDTCs.includes(item.code)
-                            ? "bg-rose-100 text-rose-800 border-rose-300 font-bold shadow-2xs"
-                            : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 font-semibold"
-                        }`}
-                      >
-                        {item.label} {activeDTCs.includes(item.code) ? "✓ Active" : "+"}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* All 26 DTC Dropdown */}
-                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center space-x-2">
-                    <span className="text-[11px] text-slate-600 font-semibold whitespace-nowrap">Choose Code:</span>
-                    <select
-                      onChange={(e) => {
-                        if (e.target.value) handleTriggerFault(e.target.value);
-                      }}
-                      value=""
-                      className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none"
-                    >
-                      <option value="">-- Choose DTC Code to Test --</option>
-                      {Object.keys(DTC_DATABASE).sort().map(c => (
-                        <option key={c} value={c}>
-                          {c} ({DTC_DATABASE[c].sensor}) - {DTC_DATABASE[c].faultDescription}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
 
                 {/* 4 Main Action Cards (Soft Pastel Tones / La Pata with Crisp Readability) */}
                 <div className="grid grid-cols-1 gap-3 pt-1">

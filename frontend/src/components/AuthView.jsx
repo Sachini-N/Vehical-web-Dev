@@ -109,13 +109,13 @@ export default function AuthView({ onAuthSuccess, onBack }) {
       </div>
 
       <div className="text-center pt-1 pb-1">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-3xl shadow-md shadow-blue-500/20 mb-2">
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-sky-100 border border-sky-200 flex items-center justify-center text-3xl shadow-2xs mb-2 text-sky-700">
           🚗
         </div>
         <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
           OBD-II Vehicle Diagnostic
         </h1>
-        <p className="text-xs text-blue-600 font-bold mt-0.5">
+        <p className="text-xs text-sky-700 font-bold mt-0.5">
           Real-Time Engine Fault Detection & Recommendation System
         </p>
       </div>
@@ -130,7 +130,7 @@ export default function AuthView({ onAuthSuccess, onBack }) {
           }}
           className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all ${
             mode === 'register'
-              ? 'bg-white text-blue-700 shadow-sm'
+              ? 'bg-white text-sky-700 shadow-sm'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -144,7 +144,7 @@ export default function AuthView({ onAuthSuccess, onBack }) {
           }}
           className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all ${
             mode === 'login'
-              ? 'bg-white text-blue-700 shadow-sm'
+              ? 'bg-white text-sky-700 shadow-sm'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
