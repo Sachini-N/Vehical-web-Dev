@@ -153,28 +153,6 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full select-none text-slate-800 bg-slate-50">
-      {/* Top Status Bar */}
-      <div className="flex justify-between items-center px-5 pt-3 pb-2 text-xs font-medium text-slate-600 border-b border-slate-200/90 bg-white/95">
-        <span className="font-mono text-slate-700 font-semibold">10:24 AM</span>
-        <div className="flex items-center space-x-2.5">
-          <span
-            className={`flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full ${
-              isConnected
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-rose-50 text-rose-700 border border-rose-200'
-            }`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full mr-1.5 ${
-                isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
-              }`}
-            ></span>
-            {isConnected ? 'ELM327 Bluetooth' : 'Disconnected'}
-          </span>
-          <span className="text-slate-600 font-semibold">🔋 78%</span>
-        </div>
-      </div>
-
       {/* Main Dynamic View Area */}
       <div className="flex-1 overflow-y-auto custom-scroll p-4 space-y-4">
         {/* ============================================================== */}
